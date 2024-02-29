@@ -20,9 +20,10 @@ void get_URL(const string &host, const string &path) {
     // Connection: close
     sock.write("Connection: close\r\n\r\n");
     // print
-    auto rcvd = sock.read();
-    cout << rcvd << '\n';
-
+    while (!sock.eof()) {
+        auto rcvd = sock.read();
+        cout << rcvd;
+    }
     // sock.close();
     sock.close();
 
