@@ -10,10 +10,13 @@ void get_URL(const string &host, const string &path) {
     // Your code here.
     TCPSocket sock;
     // connect to host
+    sock.connect(Address(host, "http"));
+    cout << sock.read();
     // request in path
     // auto recvd = sock.read();
     // print
     // sock.close();
+    sock.close();
 
     // telnet tomahawk.postech.ac.kr http
     // GET /hello HTTP/1.1
