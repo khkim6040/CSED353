@@ -1,13 +1,24 @@
-#include "socket.hh"
-#include "util.hh"
-
 #include <cstdlib>
 #include <iostream>
+
+#include "socket.hh"
+#include "util.hh"
 
 using namespace std;
 
 void get_URL(const string &host, const string &path) {
     // Your code here.
+    TCPSocket sock;
+    // connect to host
+    // request in path
+    // auto recvd = sock.read();
+    // print
+    // sock.close();
+
+    // telnet tomahawk.postech.ac.kr http
+    // GET /hello HTTP/1.1
+    // Host: tomahawk.postech.ac.kr
+    // Connection: close
 
     // You will need to connect to the "http" service on
     // the computer whose name is in the "host" string,
