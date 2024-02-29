@@ -10,18 +10,21 @@ void get_URL(const string &host, const string &path) {
     // Your code here.
     TCPSocket sock;
     // connect to host
+    // telnet tomahawk.postech.ac.kr http
     sock.connect(Address(host, "http"));
-    cout << sock.read();
     // request in path
-    // auto recvd = sock.read();
+    // GET /hello HTTP/1.1
+    sock.write("GET " + path + " HTTP/1.1\r\n");
+    // Host: tomahawk.postech.ac.kr
+    sock.write("Host: " + host + "\r\n");
+    // Connection: close
+    sock.write("Connection: close\r\n\r\n");
     // print
+    auto rcvd = sock.read();
+    cout << rcvd << '\n';
+
     // sock.close();
     sock.close();
-
-    // telnet tomahawk.postech.ac.kr http
-    // GET /hello HTTP/1.1
-    // Host: tomahawk.postech.ac.kr
-    // Connection: close
 
     // You will need to connect to the "http" service on
     // the computer whose name is in the "host" string,
