@@ -13,7 +13,7 @@ void DUMMY_CODE(Targs &&.../* unused */) {}
 
 using namespace std;
 
-ByteStream::ByteStream(const size_t capacity) : buffer(), _capacity(capacity) {}
+ByteStream::ByteStream(const size_t capacity) : _buffer(), _capacity(capacity) {}
 
 // Write a string of bytes into the stream. Write as many
 // as will fit, and return the number of bytes written.
@@ -22,7 +22,7 @@ size_t ByteStream::write(const string &data) {
     const size_t adj_len = min(data.length(), remaining_capacity());
     std::cout << data << " " << data.length() << ' ' << remaining_capacity() << '\n';
     for (size_t i = 0; i < adj_len; i++) {
-        buffer.push(data[i]);
+        _buffer.push(data[i]);
     }
     _total_written += adj_len;
     return adj_len;
@@ -40,7 +40,7 @@ string ByteStream::peek_output(const size_t len) const {
 void ByteStream::pop_output(const size_t len) {
     const size_t adj_len = min(len, buffer_size());
     for (size_t i = 0; i < adj_len; i++) {
-        buffer.pop();
+        _buffer.pop();
     }
     _total_read += adj_len;
 }
@@ -67,7 +67,7 @@ bool ByteStream::input_ended() const {
 
 // the maximum amount that can currently be peeked/read
 size_t ByteStream::buffer_size() const {
-    return buffer.size();
+    return _buffer.size();
 }
 
 // `true` if the buffer is empty
@@ -98,7 +98,7 @@ size_t ByteStream::remaining_capacity() const {
 
 string ByteStream::concatenate_buffer() const {
     // Create a temporary queue and copy elements from the original buffer
-    std::queue<char> temp_buffer = buffer;
+    std::queue<char> temp_buffer = _buffer;
     std::string str;
     size_t size = buffer_size();
     // Read elements from the temporary queue
