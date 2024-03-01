@@ -31,16 +31,7 @@ size_t ByteStream::write(const string &data) {
 // Peek at next "len" bytes of the stream
 //! \param[in] len bytes will be copied from the output side of the buffer
 string ByteStream::peek_output(const size_t len) const {
-    string str;
-    // pop whole chars in queue
-    while (!buffer.empty()) {
-        str.push_back(buffer.front());
-        buffer.pop();
-    }
-    // retrieve it
-    for (char c : str) {
-        str.push_back(c);
-    }
+    std::string str = concatenate_buffer();
     return str.substr(0, len);
 }
 
@@ -57,9 +48,9 @@ void ByteStream::pop_output(const size_t len) {
 //! \param[in] len bytes will be popped and returned
 //! \returns a string
 std::string ByteStream::read(const size_t len) {
-    string str;
+    std::string str;
     const size_t adj_len = min(len, buffer_size());
-    // pop whole chars in queue
+    // pop whole chars in the buffer
     for (size_t i = 0; i < adj_len; i++) {
         str.push_back(buffer.front());
         buffer.pop();
@@ -107,4 +98,17 @@ size_t ByteStream::bytes_read() const {
 // Returns the number of additional bytes that the stream has space for
 size_t ByteStream::remaining_capacity() const {
     return _capacity - buffer_size();
+}
+
+string ByteStream::concatenate_buffer() const {
+    // Create a temporary queue and copy elements from the original buffer
+    std::queue<char> temp_buffer = buffer;
+    std::string str;
+    size_t size = buffer_size();
+    // Read elements from the temporary queue
+    for (size_t i = 0; i < size; i++) {
+        str.push_back(temp_buffer.front());
+        temp_buffer.pop();
+    }
+    return str;
 }

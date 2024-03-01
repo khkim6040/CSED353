@@ -86,6 +86,9 @@ class ByteStream {
     //! Total number of bytes popped
     size_t bytes_read() const;
     //!@}
+
+    //! \returns entire string in buffer
+    std::string concatenate_buffer() const;
 };
 
 #endif  // SPONGE_LIBSPONGE_BYTE_STREAM_HH
