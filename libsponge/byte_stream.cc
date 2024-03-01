@@ -1,5 +1,6 @@
 #include "byte_stream.hh"
 
+#include <iostream>
 // Dummy implementation of a flow-controlled in-memory byte stream.
 
 // For Lab 0, please replace with a real implementation that passes the
@@ -12,15 +13,14 @@ void DUMMY_CODE(Targs &&.../* unused */) {}
 
 using namespace std;
 
-ByteStream::ByteStream(const size_t capacity) : buffer() {
-    _capacity = capacity;
-}
+ByteStream::ByteStream(const size_t capacity) : buffer(), _capacity(capacity) {}
 
 // Write a string of bytes into the stream. Write as many
 // as will fit, and return the number of bytes written.
 size_t ByteStream::write(const string &data) {
     // adjusted length
-    const size_t adj_len = min(data.size(), remaining_capacity());
+    const size_t adj_len = min(data.length(), remaining_capacity());
+    std::cout << data << " " << data.length() << ' ' << remaining_capacity() << '\n';
     for (size_t i = 0; i < adj_len; i++) {
         buffer.push(data[i]);
     }
@@ -42,20 +42,16 @@ void ByteStream::pop_output(const size_t len) {
     for (size_t i = 0; i < adj_len; i++) {
         buffer.pop();
     }
+    _total_read += adj_len;
 }
 
 //! Read (i.e., copy and then pop) the next "len" bytes of the stream
 //! \param[in] len bytes will be popped and returned
 //! \returns a string
 std::string ByteStream::read(const size_t len) {
-    std::string str;
     const size_t adj_len = min(len, buffer_size());
-    // pop whole chars in the buffer
-    for (size_t i = 0; i < adj_len; i++) {
-        str.push_back(buffer.front());
-        buffer.pop();
-    }
-    _total_read += adj_len;
+    std::string str = peek_output(adj_len);
+    pop_output(adj_len);
     return str;
 }
 
