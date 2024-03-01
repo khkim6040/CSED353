@@ -13,39 +13,55 @@ void DUMMY_CODE(Targs &&.../* unused */) {}
 using namespace std;
 
 ByteStream::ByteStream(const size_t capacity) {
-    // _cap = cap
-    // init queue
+    _capacity = capacity;
 }
 
 // Write a string of bytes into the stream. Write as many
 // as will fit, and return the number of bytes written.
 size_t ByteStream::write(const string &data) {
-    // At first, len = min(data.size, _cap)
-    // for 0~len -> q.push
-    // return len
+    size_t len = min(data.size(), remaining_capacity());
+    for (int i = 0; i < len; i++) {
+        buffer.push(data[i]);
+    }
+    return len;
 }
 
 // Peek at next "len" bytes of the stream
 //! \param[in] len bytes will be copied from the output side of the buffer
 string ByteStream::peek_output(const size_t len) const {
-    // string res
-    // for i~len -> res.push_back()
-    // return res
+    string str;
+    // pop whole chars in queue
+    while (!buffer.empty()) {
+        str.push_back(buffer.front());
+        buffer.pop();
+    }
+    // retrieve it
+    for (char c : str) {
+        str.push_back(c);
+    }
+    return str.substr(0, len);
 }
 
 // Remove ``len'' bytes from the buffer
 //! \param[in] len bytes will be removed from the output side of the buffer
 void ByteStream::pop_output(const size_t len) {
     // for 0~len -> q.pop()
+    for (int i = 0; i < len; i++) {
+        buffer.pop();
+    }
 }
 
 //! Read (i.e., copy and then pop) the next "len" bytes of the stream
 //! \param[in] len bytes will be popped and returned
 //! \returns a string
 std::string ByteStream::read(const size_t len) {
-    // string res
-    // for 0~len -> res.push_back(q.front()), q.pop()
-    // return res
+    string str;
+    // pop whole chars in queue
+    for (int i = 0; i < len; i++) {
+        str.push_back(buffer.front());
+        buffer.pop();
+    }
+    return str;
 }
 
 // Signal that the byte stream has reached its ending
@@ -86,5 +102,5 @@ size_t ByteStream::bytes_read() const {
 
 // Returns the number of additional bytes that the stream has space for
 size_t ByteStream::remaining_capacity() const {
-    // _cap - q.size()
+    return _capacity - buffer_size();
 }

@@ -1,8 +1,8 @@
 #ifndef SPONGE_LIBSPONGE_BYTE_STREAM_HH
 #define SPONGE_LIBSPONGE_BYTE_STREAM_HH
 
+#include <queue>
 #include <string>
-// #include <queue>
 
 //! \brief An in-order byte stream.
 
@@ -12,6 +12,7 @@
 class ByteStream {
    private:
     // Your code here -- add private members as necessary.
+    queue<char> buffer;
     size_t _capacity = 0;
     size_t _total_written = 0;
     size_t _total_read = 0;
