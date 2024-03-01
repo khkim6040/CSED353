@@ -12,18 +12,20 @@ void DUMMY_CODE(Targs &&.../* unused */) {}
 
 using namespace std;
 
-ByteStream::ByteStream(const size_t capacity) {
+ByteStream::ByteStream(const size_t capacity) : buffer() {
     _capacity = capacity;
 }
 
 // Write a string of bytes into the stream. Write as many
 // as will fit, and return the number of bytes written.
 size_t ByteStream::write(const string &data) {
-    size_t len = min(data.size(), remaining_capacity());
-    for (int i = 0; i < len; i++) {
+    // adjusted length
+    const size_t adj_len = min(data.size(), remaining_capacity());
+    for (size_t i = 0; i < adj_len; i++) {
         buffer.push(data[i]);
     }
-    return len;
+    _total_written += adj_len;
+    return adj_len;
 }
 
 // Peek at next "len" bytes of the stream
@@ -45,8 +47,8 @@ string ByteStream::peek_output(const size_t len) const {
 // Remove ``len'' bytes from the buffer
 //! \param[in] len bytes will be removed from the output side of the buffer
 void ByteStream::pop_output(const size_t len) {
-    // for 0~len -> q.pop()
-    for (int i = 0; i < len; i++) {
+    const size_t adj_len = min(len, buffer_size());
+    for (size_t i = 0; i < adj_len; i++) {
         buffer.pop();
     }
 }
@@ -56,48 +58,50 @@ void ByteStream::pop_output(const size_t len) {
 //! \returns a string
 std::string ByteStream::read(const size_t len) {
     string str;
+    const size_t adj_len = min(len, buffer_size());
     // pop whole chars in queue
-    for (int i = 0; i < len; i++) {
+    for (size_t i = 0; i < adj_len; i++) {
         str.push_back(buffer.front());
         buffer.pop();
     }
+    _total_read += adj_len;
     return str;
 }
 
 // Signal that the byte stream has reached its ending
 void ByteStream::end_input() {
-    // set _is_ended
+    _is_ended = true;
 }
 
 // `true` if the stream input has ended
 bool ByteStream::input_ended() const {
-    // ret _is_ended
+    return _is_ended;
 }
 
 // the maximum amount that can currently be peeked/read
 size_t ByteStream::buffer_size() const {
-    // return q.size()
+    return buffer.size();
 }
 
 // `true` if the buffer is empty
 bool ByteStream::buffer_empty() const {
-    // return size == 0
+    return buffer_size() == 0;
 }
 
 // `true` if the output has reached the ending
 bool ByteStream::eof() const {
     // must get end signal and buffer(queue) is empty
-    // input_ended() && buffer_empty()
+    return input_ended() && buffer_empty();
 }
 
 // Total number of bytes written
 size_t ByteStream::bytes_written() const {
-    // total_written
+    return _total_written;
 }
 
 // Total number of bytes popped
 size_t ByteStream::bytes_read() const {
-    // total_read
+    return _total_read;
 }
 
 // Returns the number of additional bytes that the stream has space for

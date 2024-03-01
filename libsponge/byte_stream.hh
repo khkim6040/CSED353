@@ -12,7 +12,7 @@
 class ByteStream {
    private:
     // Your code here -- add private members as necessary.
-    queue<char> buffer;
+    std::queue<char> buffer;
     size_t _capacity = 0;
     size_t _total_written = 0;
     size_t _total_read = 0;
