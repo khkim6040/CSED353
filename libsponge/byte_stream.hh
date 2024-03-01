@@ -2,6 +2,7 @@
 #define SPONGE_LIBSPONGE_BYTE_STREAM_HH
 
 #include <string>
+// #include <queue>
 
 //! \brief An in-order byte stream.
 
@@ -9,8 +10,12 @@
 //! side.  The byte stream is finite: the writer can end the input,
 //! and then no more bytes can be written.
 class ByteStream {
-  private:
+   private:
     // Your code here -- add private members as necessary.
+    size_t _capacity = 0;
+    size_t _total_written = 0;
+    size_t _total_read = 0;
+    bool _is_ended = false;
 
     // Hint: This doesn't need to be a sophisticated data structure at
     // all, but if any of your tests are taking longer than a second,
@@ -19,7 +24,7 @@ class ByteStream {
 
     bool _error{};  //!< Flag indicating that the stream suffered an error.
 
-  public:
+   public:
     //! Construct a stream with room for `capacity` bytes.
     ByteStream(const size_t capacity);
 

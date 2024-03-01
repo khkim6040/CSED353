@@ -8,46 +8,83 @@
 // You will need to add private members to the class declaration in `byte_stream.hh`
 
 template <typename... Targs>
-void DUMMY_CODE(Targs &&... /* unused */) {}
+void DUMMY_CODE(Targs &&.../* unused */) {}
 
 using namespace std;
 
-ByteStream::ByteStream(const size_t capacity) { DUMMY_CODE(capacity); }
-
-size_t ByteStream::write(const string &data) {
-    DUMMY_CODE(data);
-    return {};
+ByteStream::ByteStream(const size_t capacity) {
+    // _cap = cap
+    // init queue
 }
 
+// Write a string of bytes into the stream. Write as many
+// as will fit, and return the number of bytes written.
+size_t ByteStream::write(const string &data) {
+    // At first, len = min(data.size, _cap)
+    // for 0~len -> q.push
+    // return len
+}
+
+// Peek at next "len" bytes of the stream
 //! \param[in] len bytes will be copied from the output side of the buffer
 string ByteStream::peek_output(const size_t len) const {
-    DUMMY_CODE(len);
-    return {};
+    // string res
+    // for i~len -> res.push_back()
+    // return res
 }
 
+// Remove ``len'' bytes from the buffer
 //! \param[in] len bytes will be removed from the output side of the buffer
-void ByteStream::pop_output(const size_t len) { DUMMY_CODE(len); }
+void ByteStream::pop_output(const size_t len) {
+    // for 0~len -> q.pop()
+}
 
 //! Read (i.e., copy and then pop) the next "len" bytes of the stream
 //! \param[in] len bytes will be popped and returned
 //! \returns a string
 std::string ByteStream::read(const size_t len) {
-    DUMMY_CODE(len);
-    return {};
+    // string res
+    // for 0~len -> res.push_back(q.front()), q.pop()
+    // return res
 }
 
-void ByteStream::end_input() {}
+// Signal that the byte stream has reached its ending
+void ByteStream::end_input() {
+    // set _is_ended
+}
 
-bool ByteStream::input_ended() const { return {}; }
+// `true` if the stream input has ended
+bool ByteStream::input_ended() const {
+    // ret _is_ended
+}
 
-size_t ByteStream::buffer_size() const { return {}; }
+// the maximum amount that can currently be peeked/read
+size_t ByteStream::buffer_size() const {
+    // return q.size()
+}
 
-bool ByteStream::buffer_empty() const { return {}; }
+// `true` if the buffer is empty
+bool ByteStream::buffer_empty() const {
+    // return size == 0
+}
 
-bool ByteStream::eof() const { return false; }
+// `true` if the output has reached the ending
+bool ByteStream::eof() const {
+    // must get end signal and buffer(queue) is empty
+    // input_ended() && buffer_empty()
+}
 
-size_t ByteStream::bytes_written() const { return {}; }
+// Total number of bytes written
+size_t ByteStream::bytes_written() const {
+    // total_written
+}
 
-size_t ByteStream::bytes_read() const { return {}; }
+// Total number of bytes popped
+size_t ByteStream::bytes_read() const {
+    // total_read
+}
 
-size_t ByteStream::remaining_capacity() const { return {}; }
+// Returns the number of additional bytes that the stream has space for
+size_t ByteStream::remaining_capacity() const {
+    // _cap - q.size()
+}
