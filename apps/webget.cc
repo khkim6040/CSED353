@@ -1,23 +1,25 @@
-#include <cstdlib>
-#include <iostream>
-
 #include "socket.hh"
 #include "util.hh"
+
+#include <cstdlib>
+#include <iostream>
 
 using namespace std;
 
 void get_URL(const string &host, const string &path) {
     // Your code here.
+    // Previous Written Example
+    // telnet tomahawk.postech.ac.kr http
+    // GET /hello HTTP/1.1
+    // Host: tomahawk.postech.ac.kr
+    // Connection: close
+
     TCPSocket sock;
     // connect to host
-    // telnet tomahawk.postech.ac.kr http
     sock.connect(Address(host, "http"));
     // request in path
-    // GET /hello HTTP/1.1
     sock.write("GET " + path + " HTTP/1.1\r\n");
-    // Host: tomahawk.postech.ac.kr
     sock.write("Host: " + host + "\r\n");
-    // Connection: close
     sock.write("Connection: close\r\n\r\n");
     // print
     while (!sock.eof()) {
