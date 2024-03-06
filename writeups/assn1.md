@@ -7,7 +7,7 @@ My POVIS ID: [khkim6040]
 
 My student ID (numeric): [20190650]
 
-This assignment took me about [3시간(자료 읽고, 설계)] hours to do (including the time on studying, designing, and writing the code).
+This assignment took me about [3시간(자료 읽고, 설계)+1.5시간(구현)] hours to do (including the time on studying, designing, and writing the code).
 
 Program Structure and Design of the StreamReassembler:
 [substring이 stream의 앞뒤뿐만 아니라 가운데에도 들어갈 수 있으므로 queue, deque과 같은 구조는 불리할 것이라 판단,

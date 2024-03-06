@@ -14,10 +14,15 @@ using namespace std;
 class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
-    vector<char> _stream;
-    ByteStream _output;  //!< The reassembled in-order byte stream
-    size_t _capacity;    //!< The maximum number of bytes
-    size_t _unassembled_count;
+   vector<char> _stream;        //!< Use STL vector to store and reassemble substring
+   vector<bool> _is_allocated;  //!< Tell whether a position of _stream is allocated to avoid overlap
+   ByteStream _output;          //!< The reassembled in-order byte stream
+   size_t _capacity = 0;        //!< The maximum number of bytes
+   size_t _unassembled_count = 0;
+   size_t _next_read_point = 0;      //!< Indicate next to the already read point
+   size_t _first_unread_point = -1;  //!< Indicate first unread point
+   bool _ignore_flag = false;
+   bool _is_first_unread_point_set = false;
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
@@ -50,6 +55,8 @@ class StreamReassembler {
     //! \brief Is the internal state empty (other than the output stream)?
     //! \returns `true` if no substrings are waiting to be assembled
     bool empty() const;
+
+    size_t stream_size() const;
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH
