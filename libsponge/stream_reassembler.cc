@@ -15,7 +15,7 @@ StreamReassembler::StreamReassembler(const size_t capacity) : _stream(capacity),
 //! possibly out-of-order, from the logical stream, and assembles any newly
 //! contiguous substrings and writes them into the output stream in order.
 void StreamReassembler::push_substring(const string& data, const size_t index, const bool eof) {
-    size_t stream_limit_index = _output.bytes_read() + _capacity - 1;
+    size_t stream_limit_index = _output.bytes_read() + _capacity - 1;  // The last index of the stream
     size_t data_length = data.length();
     // if data position exceeds stream size during not exceeding stream limit, resize vectors to obtain data
     bool resize_flag = index <= stream_limit_index && stream_size() <= index + data_length;
@@ -49,16 +49,12 @@ void StreamReassembler::set_eof() {
 }
 
 void StreamReassembler::handle_stream_eof() {
-    // At first, get eof flag
-    // Then, current stream need to be empty
-    // Finally, if there was any ignored byte, stream eof will be never set
     if (_is_eof && empty() && !_ignore_flag) {
         _output.end_input();
     }
 }
 
 void StreamReassembler::resize_vectors(const size_t& data_length) {
-    // resize _stream, _is_allocated
     size_t new_size = _stream.size() + _capacity + data_length;
     _stream.resize(new_size);
     _is_allocated.resize(new_size);
@@ -66,7 +62,7 @@ void StreamReassembler::resize_vectors(const size_t& data_length) {
 
 void StreamReassembler::handle_data(const string& data, const size_t& index, const size_t& stream_limit_index, const size_t& data_length) {
     for (size_t i = index; i < index + data_length; i++) {
-        // Out of stream memory
+        // Out of stream memory case
         if (i > stream_limit_index) {
             // Ingore it
             _ignore_flag = true;
@@ -75,9 +71,11 @@ void StreamReassembler::handle_data(const string& data, const size_t& index, con
         }
         // Check any data is already located in the position
         if (!_is_allocated[i]) {
+            // If not, push it into the stream
             _is_allocated[i] = true;
             _stream[i] = data[i - index];
             _unassembled_count++;
+            // Set the first unread point if it is not set or the current point is smaller than the first unread point
             if (!_is_first_unread_point_set || i < _first_unread_point) {
                 _first_unread_point = i;
                 _is_first_unread_point_set = true;
@@ -87,13 +85,16 @@ void StreamReassembler::handle_data(const string& data, const size_t& index, con
 }
 
 void StreamReassembler::assemble_data() {
+    // if element at the first unread point is allocated, assemble data
     if (_first_unread_point == _next_read_point) {
         string str;
         while (_is_allocated[_next_read_point]) {
             str += _stream[_next_read_point++];
             _unassembled_count--;
         }
+        // Write assembled data into the output stream
         _output.write(str);
+        // After assembling data, set _is_first_unread_point_set to false to set _first_unread_point each time data comes in
         _is_first_unread_point_set = false;
     }
 }
