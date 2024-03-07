@@ -7,22 +7,21 @@ My POVIS ID: [khkim6040]
 
 My student ID (numeric): [20190650]
 
-This assignment took me about [3시간(자료 읽고, 설계)+1.5시간(구현)] hours to do (including the time on studying, designing, and writing the code).
+This assignment took me about [6.5] hours to do (including the time on studying(1h), designing(2h), and writing the code(3.5h)).
 
 Program Structure and Design of the StreamReassembler:
-[substring이 stream의 앞뒤뿐만 아니라 가운데에도 들어갈 수 있으므로 queue, deque과 같은 구조는 불리할 것이라 판단,
-size를 갱신해줘야 하는 비용이 있긴 하지만 가운데에 넣기 용이한 vector를 사용해 구현했다 ]
+[Consider not to use the queue, deque, or list, because the substring can be inserted in the middle of the stream. Instead, I used vector to implement the stream reassembler despite of its passive resizing panalty]
 
 Implementation Challenges:
-[]
+[At first, I thought to initialize the stream vector with a value such as -1 or MAX to simply avoid overlapping, but after I checked that tests give randomly generated data, I decided to use another vector(_is_allocated) to validate whether the data is already inserted or not.]
 
 Remaining Bugs:
-[]
+[vector resizing problem. It is only valid when the length of whole data is less than 2^32 - 1 (=4GB).]
 
-- Optional: I had unexpected difficulty with: [describe]
+- Optional: I had unexpected difficulty with: [Make appropriate data handle logic, espaecially for the edge cases(cap.cc, holes.cc) inserting overlapping substring]
 
-- Optional: I think you could make this assignment better by: [describe]
+- Optional: I think you could make this assignment better by: [Introduce more edge test cases]
 
-- Optional: I was surprised by: [describe]
+- Optional: I was surprised by: [Tests even consider randomly generated data]
 
-- Optional: I'm not sure about: [describe]
+- Optional: I'm not sure about: [Whether the vector is the best data structure to implement the stream reassembler and I handled all of the edge cases]
