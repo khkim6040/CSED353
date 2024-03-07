@@ -16,9 +16,9 @@ StreamReassembler::StreamReassembler(const size_t capacity) : _stream(capacity),
 //! contiguous substrings and writes them into the output stream in order.
 void StreamReassembler::push_substring(const string &data, const size_t index, const bool eof) {
     // Deal with input data
-    size_t stream_limit = _next_read_point + _capacity;
+    size_t stream_limit_index = _output.bytes_read() + _capacity - 1;
     size_t data_length = data.length();
-    if (index < stream_limit && stream_size() <= index) {
+    if (index <= stream_limit_index && stream_size() <= index + data_length) {
         // resize _stream, _is_allocated
         size_t new_size = _stream.size() + _capacity + data_length;
         _stream.resize(new_size);
@@ -27,8 +27,8 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
     // Push data into stream
     for (size_t i = 0; i < data_length; i++) {
         // Out of stream memory
-        if (index >= _capacity + _next_read_point) {
-                        // Ingore it
+        if (index + i > stream_limit_index) {
+            // Ingore it
             _ignore_flag = true;
             // Stop considering additional data
             break;
