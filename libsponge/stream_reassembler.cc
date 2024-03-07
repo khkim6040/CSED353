@@ -14,52 +14,22 @@ StreamReassembler::StreamReassembler(const size_t capacity) : _stream(capacity),
 //! \details This function accepts a substring (aka a segment) of bytes,
 //! possibly out-of-order, from the logical stream, and assembles any newly
 //! contiguous substrings and writes them into the output stream in order.
-void StreamReassembler::push_substring(const string &data, const size_t index, const bool eof) {
-    // Deal with input data
+void StreamReassembler::push_substring(const string& data, const size_t index, const bool eof) {
     size_t stream_limit_index = _output.bytes_read() + _capacity - 1;
     size_t data_length = data.length();
-    if (index <= stream_limit_index && stream_size() <= index + data_length) {
-        // resize _stream, _is_allocated
-        size_t new_size = _stream.size() + _capacity + data_length;
-        _stream.resize(new_size);
-        _is_allocated.resize(new_size);
+    // if data position exceeds stream size during not exceeding stream limit, resize vectors to obtain data
+    bool resize_flag = index <= stream_limit_index && stream_size() <= index + data_length;
+    if (resize_flag) {
+        resize_vectors(data_length);
     }
     // Push data into stream
-    for (size_t i = 0; i < data_length; i++) {
-        // Out of stream memory
-        if (index + i > stream_limit_index) {
-            // Ingore it
-            _ignore_flag = true;
-            // Stop considering additional data
-            break;
-        }
-        // Check any data is already located in the position
-        if (!_is_allocated[index + i]) {
-            _is_allocated[index + i] = true;
-            _stream[index + i] = data[i];
-            _unassembled_count++;
-            if (!_is_first_unread_point_set || index + i < _first_unread_point) {
-                _first_unread_point = index + i;
-                _is_first_unread_point_set = true;
-            }
-        }
-    }
-    // Read phase
-    if (_first_unread_point == _next_read_point) {
-        string str;
-        while (_is_allocated[_next_read_point]) {
-            str.push_back(_stream[_next_read_point++]);
-            _unassembled_count--;
-        }
-        _output.write(str);
-        _is_first_unread_point_set = false;
-    }
-    // Handle eof flag
+    handle_data(data, index, stream_limit_index, data_length);
+    // Assemble data
+    assemble_data();
+    // Handle eof argument
     if (eof)
         set_eof();
-    if (_is_eof && empty() && !_ignore_flag) {
-        _output.end_input();
-    }
+    handle_stream_eof();
 }
 
 size_t StreamReassembler::unassembled_bytes() const {
@@ -76,4 +46,54 @@ size_t StreamReassembler::stream_size() const {
 
 void StreamReassembler::set_eof() {
     _is_eof = true;
+}
+
+void StreamReassembler::handle_stream_eof() {
+    // At first, get eof flag
+    // Then, current stream need to be empty
+    // Finally, if there was any ignored byte, stream eof will be never set
+    if (_is_eof && empty() && !_ignore_flag) {
+        _output.end_input();
+    }
+}
+
+void StreamReassembler::resize_vectors(const size_t& data_length) {
+    // resize _stream, _is_allocated
+    size_t new_size = _stream.size() + _capacity + data_length;
+    _stream.resize(new_size);
+    _is_allocated.resize(new_size);
+}
+
+void StreamReassembler::handle_data(const string& data, const size_t& index, const size_t& stream_limit_index, const size_t& data_length) {
+    for (size_t i = index; i < index + data_length; i++) {
+        // Out of stream memory
+        if (i > stream_limit_index) {
+            // Ingore it
+            _ignore_flag = true;
+            // Stop considering additional data
+            break;
+        }
+        // Check any data is already located in the position
+        if (!_is_allocated[i]) {
+            _is_allocated[i] = true;
+            _stream[i] = data[i - index];
+            _unassembled_count++;
+            if (!_is_first_unread_point_set || i < _first_unread_point) {
+                _first_unread_point = i;
+                _is_first_unread_point_set = true;
+            }
+        }
+    }
+}
+
+void StreamReassembler::assemble_data() {
+    if (_first_unread_point == _next_read_point) {
+        string str;
+        while (_is_allocated[_next_read_point]) {
+            str += _stream[_next_read_point++];
+            _unassembled_count--;
+        }
+        _output.write(str);
+        _is_first_unread_point_set = false;
+    }
 }

@@ -18,12 +18,12 @@ class StreamReassembler {
    vector<bool> _is_allocated;  //!< Tell whether a position of _stream is allocated to avoid overlap
    ByteStream _output;          //!< The reassembled in-order byte stream
    size_t _capacity = 0;        //!< The maximum number of bytes
-   size_t _unassembled_count = 0;
+   size_t _unassembled_count = 0;    //!< Number of unassembled bytes
    size_t _next_read_point = 0;      //!< Indicate next to the already read point
    size_t _first_unread_point = 0;   //!< Indicate first unread point
-   bool _ignore_flag = false;
-   bool _is_first_unread_point_set = false;
-   bool _is_eof = false;
+   bool _ignore_flag = false;        //!< Tell whether any unacceptable byte occurred
+   bool _is_first_unread_point_set = false;  //!< Used to set _first_unread_point each time data comes in
+   bool _is_eof = false;                     //!< Used to remember whether true value of argument eof was passed
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
@@ -59,6 +59,10 @@ class StreamReassembler {
 
     size_t stream_size() const;
     void set_eof();
+    void handle_stream_eof();
+    void resize_vectors(const size_t& data_length);
+    void handle_data(const string& data, const size_t& index, const size_t& stream_limit_index, const size_t& data_length);
+    void assemble_data();
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH
