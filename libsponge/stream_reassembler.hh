@@ -14,16 +14,16 @@ using namespace std;
 class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
-   vector<char> _stream;        //!< Use STL vector to store and reassemble substring
-   vector<bool> _is_allocated;  //!< Tell whether a position of _stream is allocated to avoid overlap
-   ByteStream _output;          //!< The reassembled in-order byte stream
-   size_t _capacity = 0;        //!< The maximum number of bytes
-   size_t _unassembled_count = 0;    //!< Number of unassembled bytes
-   size_t _next_read_point = 0;      //!< Indicate next to the already read point
-   size_t _first_unread_point = 0;   //!< Indicate first unread point
-   bool _ignore_flag = false;        //!< Tell whether any unacceptable byte occurred
-   bool _is_first_unread_point_set = false;  //!< Used to set _first_unread_point each time data comes in
-   bool _is_eof = false;                     //!< Used to remember whether true value of argument eof was passed
+    vector<char> _stream;                     //!< Use STL vector to store and reassemble substring
+    vector<bool> _is_allocated;               //!< Tell whether a position of _stream is allocated to avoid overlap
+    ByteStream _output;                       //!< The reassembled in-order byte stream
+    size_t _capacity = 0;                     //!< The maximum number of bytes
+    size_t _unassembled_count = 0;            //!< Number of unassembled bytes
+    size_t _next_read_point = 0;              //!< Indicate next to the already read point
+    size_t _first_unread_point = 0;           //!< Indicate first unread point
+    bool _ignore_flag = false;                //!< Tell whether any unacceptable byte occurred
+    bool _is_first_unread_point_set = false;  //!< Used to set _first_unread_point each time data comes in
+    bool _is_eof = false;                     //!< Used to remember whether true value of argument eof was passed
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
@@ -73,7 +73,7 @@ class StreamReassembler {
     //! \details Resize _stream and _is_allocated vectors
     //! \param data_length the length of data
     //! \note This function is called when data position exceeds stream size during not exceeding stream limit
-    void resize_vectors(const size_t& data_length);
+    void resize_vectors(const size_t &data_length);
 
     //! \brief Push data into stream
     //! \details This function is called when data comes in
@@ -81,7 +81,10 @@ class StreamReassembler {
     //! \param index same as the index argument of push_substring
     //! \param stream_limit_index the last index of the stream
     //! \param data_length the length of data
-    void handle_data(const string& data, const size_t& index, const size_t& stream_limit_index, const size_t& data_length);
+    void handle_data(const string &data,
+                     const size_t &index,
+                     const size_t &stream_limit_index,
+                     const size_t &data_length);
 
     //! \brief Consider the data and assemble it
     //! \details Write any newly contiguous bytes into the _output stream

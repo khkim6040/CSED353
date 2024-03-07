@@ -9,12 +9,13 @@
 
 using namespace std;
 
-StreamReassembler::StreamReassembler(const size_t capacity) : _stream(capacity), _is_allocated(capacity), _output(capacity), _capacity(capacity) {}
+StreamReassembler::StreamReassembler(const size_t capacity)
+    : _stream(capacity), _is_allocated(capacity), _output(capacity), _capacity(capacity) {}
 
 //! \details This function accepts a substring (aka a segment) of bytes,
 //! possibly out-of-order, from the logical stream, and assembles any newly
 //! contiguous substrings and writes them into the output stream in order.
-void StreamReassembler::push_substring(const string& data, const size_t index, const bool eof) {
+void StreamReassembler::push_substring(const string &data, const size_t index, const bool eof) {
     size_t stream_limit_index = _output.bytes_read() + _capacity - 1;  // The last index of the stream
     size_t data_length = data.length();
     // if data position exceeds stream size during not exceeding stream limit, resize vectors to obtain data
@@ -32,21 +33,13 @@ void StreamReassembler::push_substring(const string& data, const size_t index, c
     handle_stream_eof();
 }
 
-size_t StreamReassembler::unassembled_bytes() const {
-    return _unassembled_count;
-}
+size_t StreamReassembler::unassembled_bytes() const { return _unassembled_count; }
 
-bool StreamReassembler::empty() const {
-    return _unassembled_count == 0;
-}
+bool StreamReassembler::empty() const { return _unassembled_count == 0; }
 
-size_t StreamReassembler::stream_size() const {
-    return _stream.size();
-}
+size_t StreamReassembler::stream_size() const { return _stream.size(); }
 
-void StreamReassembler::set_eof() {
-    _is_eof = true;
-}
+void StreamReassembler::set_eof() { _is_eof = true; }
 
 void StreamReassembler::handle_stream_eof() {
     if (_is_eof && empty() && !_ignore_flag) {
@@ -54,13 +47,16 @@ void StreamReassembler::handle_stream_eof() {
     }
 }
 
-void StreamReassembler::resize_vectors(const size_t& data_length) {
+void StreamReassembler::resize_vectors(const size_t &data_length) {
     size_t new_size = _stream.size() + _capacity + data_length;
     _stream.resize(new_size);
     _is_allocated.resize(new_size);
 }
 
-void StreamReassembler::handle_data(const string& data, const size_t& index, const size_t& stream_limit_index, const size_t& data_length) {
+void StreamReassembler::handle_data(const string &data,
+                                    const size_t &index,
+                                    const size_t &stream_limit_index,
+                                    const size_t &data_length) {
     for (size_t i = index; i < index + data_length; i++) {
         // Out of stream memory case
         if (i > stream_limit_index) {
@@ -94,7 +90,8 @@ void StreamReassembler::assemble_data() {
         }
         // Write assembled data into the output stream
         _output.write(str);
-        // After assembling data, set _is_first_unread_point_set to false to set _first_unread_point each time data comes in
+        // After assembling data, set _is_first_unread_point_set to false to set _first_unread_point each time data
+        // comes in
         _is_first_unread_point_set = false;
     }
 }
