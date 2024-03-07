@@ -20,7 +20,7 @@ class StreamReassembler {
    size_t _capacity = 0;        //!< The maximum number of bytes
    size_t _unassembled_count = 0;
    size_t _next_read_point = 0;      //!< Indicate next to the already read point
-   size_t _first_unread_point = -1;  //!< Indicate first unread point
+   size_t _first_unread_point = 0;   //!< Indicate first unread point
    bool _ignore_flag = false;
    bool _is_first_unread_point_set = false;
 

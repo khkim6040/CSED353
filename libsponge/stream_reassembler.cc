@@ -26,17 +26,19 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
     }
     // Push data into stream
     for (size_t i = 0; i < data_length; i++) {
+        // Out of stream memory
         if (index >= _capacity + _next_read_point) {
-            // Out of stream memory
-            // Ingore it
+                        // Ingore it
             _ignore_flag = true;
             // Stop considering additional data
             break;
         }
+        // Check any data is already located in the position
         if (!_is_allocated[index + i]) {
+            _is_allocated[index + i] = true;
             _stream[index + i] = data[i];
             _unassembled_count++;
-            if (_first_unread_point < _next_read_point || index+i < _first_unread_point ) {
+            if (!_is_first_unread_point_set || index + i < _first_unread_point) {
                 _first_unread_point = index + i;
                 _is_first_unread_point_set = true;
             }
@@ -50,6 +52,7 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
             _unassembled_count--;
         }
         _output.write(str);
+        _is_first_unread_point_set = false;
     }
     // Handle eof flag
     if (eof && empty() && !_ignore_flag) {
