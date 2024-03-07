@@ -23,6 +23,7 @@ class StreamReassembler {
    size_t _first_unread_point = 0;   //!< Indicate first unread point
    bool _ignore_flag = false;
    bool _is_first_unread_point_set = false;
+   bool _is_eof = false;
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
@@ -57,6 +58,7 @@ class StreamReassembler {
     bool empty() const;
 
     size_t stream_size() const;
+    void set_eof();
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH

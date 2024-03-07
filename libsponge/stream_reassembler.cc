@@ -55,7 +55,9 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
         _is_first_unread_point_set = false;
     }
     // Handle eof flag
-    if (eof && empty() && !_ignore_flag) {
+    if (eof)
+        set_eof();
+    if (_is_eof && empty() && !_ignore_flag) {
         _output.end_input();
     }
 }
@@ -70,4 +72,8 @@ bool StreamReassembler::empty() const {
 
 size_t StreamReassembler::stream_size() const {
     return _stream.size();
+}
+
+void StreamReassembler::set_eof() {
+    _is_eof = true;
 }
