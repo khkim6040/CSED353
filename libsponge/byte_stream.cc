@@ -18,7 +18,7 @@ size_t ByteStream::write(const string &data) {
     // adjusted length
     const size_t adj_len = min(data.length(), remaining_capacity());
     for (size_t i = 0; i < adj_len; i++) {
-        _buffer.push(data[i]);
+        _buffer.push_back(data[i]);
     }
     _total_written += adj_len;
     return adj_len;
@@ -26,15 +26,15 @@ size_t ByteStream::write(const string &data) {
 
 //! \param[in] len bytes will be copied from the output side of the buffer
 string ByteStream::peek_output(const size_t len) const {
-    string str = concatenate_buffer();
-    return str.substr(0, len);
+    size_t adj_len = min(len, buffer_size());
+    return string(_buffer.begin(), _buffer.begin() + adj_len);
 }
 
 //! \param[in] len bytes will be removed from the output side of the buffer
 void ByteStream::pop_output(const size_t len) {
     const size_t adj_len = min(len, buffer_size());
     for (size_t i = 0; i < adj_len; i++) {
-        _buffer.pop();
+        _buffer.pop_front();
     }
     _total_read += adj_len;
 }
@@ -42,9 +42,8 @@ void ByteStream::pop_output(const size_t len) {
 //! \param[in] len bytes will be popped and returned
 //! \returns a string
 std::string ByteStream::read(const size_t len) {
-    const size_t adj_len = min(len, buffer_size());
-    string str = peek_output(adj_len);
-    pop_output(adj_len);
+    string str = peek_output(len);
+    pop_output(len);
     return str;
 }
 
@@ -66,16 +65,3 @@ size_t ByteStream::bytes_written() const { return _total_written; }
 size_t ByteStream::bytes_read() const { return _total_read; }
 
 size_t ByteStream::remaining_capacity() const { return _capacity - buffer_size(); }
-
-string ByteStream::concatenate_buffer() const {
-    // Create a temporary queue and copy elements from the original buffer
-    queue<char> temp_buffer = _buffer;
-    string str;
-    size_t size = buffer_size();
-    // Read elements from the temporary queue
-    for (size_t i = 0; i < size; i++) {
-        str.push_back(temp_buffer.front());
-        temp_buffer.pop();
-    }
-    return str;
-}

@@ -1,7 +1,7 @@
 #ifndef SPONGE_LIBSPONGE_BYTE_STREAM_HH
 #define SPONGE_LIBSPONGE_BYTE_STREAM_HH
 
-#include <queue>
+#include <deque>
 #include <string>
 
 //! \brief An in-order byte stream.
@@ -13,17 +13,17 @@ class ByteStream {
   private:
     // Your code here -- add private members as necessary.
     // Queue type buffer
-    std::queue<char> _buffer;
-    size_t _capacity = 0;
-    size_t _total_written = 0;
-    size_t _total_read = 0;
-    bool _is_ended = false;
-    bool _error{};  //!< Flag indicating that the stream suffered an error.
+   std::deque<char> _buffer;
+   size_t _capacity = 0;
+   size_t _total_written = 0;
+   size_t _total_read = 0;
+   bool _is_ended = false;
+   bool _error{};  //!< Flag indicating that the stream suffered an error.
 
-    // Hint: This doesn't need to be a sophisticated data structure at
-    // all, but if any of your tests are taking longer than a second,
-    // that's a sign that you probably want to keep exploring
-    // different approaches.
+   // Hint: This doesn't need to be a sophisticated data structure at
+   // all, but if any of your tests are taking longer than a second,
+   // that's a sign that you probably want to keep exploring
+   // different approaches.
   public:
     //! Construct a stream with room for `capacity` bytes.
     ByteStream(const size_t capacity);
@@ -85,10 +85,6 @@ class ByteStream {
     //! Total number of bytes popped
     size_t bytes_read() const;
     //!@}
-
-    //! const function used in peek_output()
-    //! \returns entire string in buffer
-    std::string concatenate_buffer() const;
 };
 
 #endif  // SPONGE_LIBSPONGE_BYTE_STREAM_HH
