@@ -46,8 +46,8 @@ uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
         return diff;
     }
 
-    //  |diff| .... |diff + k*MOD| ............ |checkpoint| ............. |diff + (k+1)*MOD|
-    //                           |<- left_gap ->|          |<- right_gap ->|
+    // |diff| .... |diff + k*MOD| ............ |checkpoint| ............. |diff + (k+1)*MOD|
+    //                          |<- left_gap ->|          |<- right_gap ->|
     // left_gap + right_gap = MOD(=2^32)
     uint32_t left_gap = (checkpoint - diff) % MOD;
     uint32_t right_gap = MOD - left_gap;
