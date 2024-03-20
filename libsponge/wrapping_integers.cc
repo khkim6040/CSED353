@@ -31,27 +31,37 @@ WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) {
 //! and the other stream runs from the remote TCPSender to the local TCPReceiver and
 //! has a different ISN.
 uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
-    int64_t nn = n.raw_value();
-    int64_t isnn = isn.raw_value();
+    int64_t nr = n.raw_value();
+    int64_t isnr = isn.raw_value();
+    uint64_t MOD = 1ull << 32;
+    // // uint64_t diff = n.raw_value() > isn.raw_value() ? n.raw_value() - isn.raw_value() : isn.raw_value() - n.raw_value();
+    if (nr < isnr)
+        nr += MOD;
 
-    // uint64_t diff = n.raw_value() > isn.raw_value() ? n.raw_value() - isn.raw_value() : isn.raw_value() - n.raw_value();
-    uint64_t pre;
-    if (nn - isnn < 0)
-        pre = (1ull << 32) - (isnn - nn) % (1ull << 32);
-    else
-        pre = (nn - isnn) % (1ull << 32);
+    uint64_t diff = nr - isnr;
 
-    uint64_t pre_gap = pre > checkpoint ? pre - checkpoint : checkpoint - pre;
-    for (uint64_t cur = pre + (1ull << 32); cur < UINT64_MAX; cur += (1ull << 32)) {
-        uint64_t cur_gap = cur > checkpoint ? cur - checkpoint : checkpoint - cur;
-        if (cur_gap >= pre_gap) {
-            break;
-        } else {
-            pre = cur;
-            pre_gap = cur_gap;
-        }
+    if (diff >= checkpoint) {
+        return diff;
     }
 
+    uint32_t left_gap = (checkpoint - diff) % MOD;
+    uint32_t right_gap = MOD - left_gap;
+    if (left_gap < right_gap) {
+        return checkpoint - left_gap;
+    } else {
+        return checkpoint + right_gap;
+    }
+    // uint64_t pre_gap = pre > checkpoint ? pre - checkpoint : checkpoint - pre;
+    // for (uint64_t cur = pre + (1ull << 32); cur < UINT64_MAX; cur += (1ull << 32)) {
+    //     uint64_t cur_gap = cur > checkpoint ? cur - checkpoint : checkpoint - cur;
+    //     if (cur_gap >= pre_gap) {
+    //         break;
+    //     } else {
+    //         pre = cur;
+    //         pre_gap = cur_gap;
+    //     }
+    // }
+
     // cout << n.raw_value() << " " << isn.raw_value() << " " << checkpoint << " " << pre << endl;
-    return pre;
+    return diff;
 }
