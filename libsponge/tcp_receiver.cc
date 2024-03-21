@@ -4,7 +4,6 @@
 
 // For Lab 2, please replace with a real implementation that passes the
 // automated checks run by `make check_lab2`.
-#include <iostream>
 
 using namespace std;
 

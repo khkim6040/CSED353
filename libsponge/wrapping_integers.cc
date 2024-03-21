@@ -1,7 +1,5 @@
 #include "wrapping_integers.hh"
 
-#include <stdlib.h>
-
 // Dummy implementation of a 32-bit wrapping integer
 
 // For Lab 2, please replace with a real implementation that passes the
@@ -32,8 +30,8 @@ WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) {
 //! has a different ISN.
 uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
     uint64_t MOD = 1ull << 32;
-    int64_t nr = n.raw_value();
-    int64_t isnr = isn.raw_value();
+    uint64_t nr = n.raw_value();
+    uint64_t isnr = isn.raw_value();
     // For modulo operation in C++
     if (nr < isnr)
         nr += MOD;
