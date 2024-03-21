@@ -4,6 +4,7 @@
 
 // For Lab 2, please replace with a real implementation that passes the
 // automated checks run by `make check_lab2`.
+#include <iostream>
 
 using namespace std;
 
@@ -16,7 +17,14 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
             // _first_unacceptable = 1 + _capacity;
         }
     }
-    _has_FIN_arrived = seg.header().fin;
+
+    if (!_has_FIN_arrived) {
+        if (seg.header().fin) {
+            _has_FIN_arrived = true;
+            _FIN_abs_seqno = unwrap(seg.header().seqno + seg.length_in_sequence_space() - 1, _isn, _recent_abs_seqno);
+        }
+    }
+
     // Push seg into reassembler
     // Unpack seg seqno
     uint64_t abs_seqno = unwrap(seg.header().seqno, _isn, _recent_abs_seqno);
@@ -27,7 +35,7 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
         if (seg.length_in_sequence_space() == 1) {
             return;
         } else {
-            _reassembler.push_substring(seg.payload().copy(), abs_seqno - 1, _has_FIN_arrived);
+            _reassembler.push_substring(seg.payload().copy(), 0, _has_FIN_arrived);
             return;
         }
     }
@@ -42,7 +50,12 @@ optional<WrappingInt32> TCPReceiver::ackno() const {
         return {};
         // return windows left edge
     }
-    return wrap(_has_SYN_arrived + _reassembler.get_next_read_point() + _has_FIN_arrived, _isn);
+    uint64_t temp = _has_SYN_arrived + _reassembler.get_next_read_point();
+    if (temp == _FIN_abs_seqno) {
+        // std::cout << "unassembled_bytes: " << _reassembler.unassembled_bytes() << endl;
+        return wrap(temp + _has_FIN_arrived, _isn);
+    }
+    return wrap(temp, _isn);
 }
 
 size_t TCPReceiver::window_size() const {

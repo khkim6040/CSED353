@@ -25,6 +25,7 @@ class TCPReceiver {
     // uint64_t _first_unassembled = 0;
     // uint64_t _first_unacceptable = 0;
     uint64_t _recent_abs_seqno = 0;
+    uint64_t _FIN_abs_seqno = 0;
 
    public:
     //! \brief Construct a TCP receiver
