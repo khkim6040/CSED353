@@ -14,12 +14,13 @@ using namespace std;
 class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
-    vector<char> _stream;                     //!< Use STL vector to store and reassemble substring
-    vector<bool> _is_allocated;               //!< Tell whether a position of _stream is allocated to avoid overlap
-    ByteStream _output;                       //!< The reassembled in-order byte stream
-    size_t _capacity = 0;                     //!< The maximum number of bytes
-    size_t _unassembled_count = 0;            //!< Number of unassembled bytes
-    size_t _next_read_point = 0;              //!< Indicate next to the already read point
+    vector<char> _stream;           //!< Use STL vector to store and reassemble substring
+    vector<bool> _is_allocated;     //!< Tell whether a position of _stream is allocated to avoid overlap
+    ByteStream _output;             //!< The reassembled in-order byte stream
+    size_t _capacity = 0;           //!< The maximum number of bytes
+    size_t _unassembled_count = 0;  //!< Number of unassembled bytes
+    size_t _next_read_point =
+        0;  //!< Indicate next to the already read point, which also stands the first unassembled point in the stream
     size_t _first_unread_point = 0;           //!< Indicate first unread point
     bool _ignore_flag = false;                //!< Tell whether any unacceptable byte occurred
     bool _is_first_unread_point_set = false;  //!< Used to set _first_unread_point each time data comes in
@@ -89,6 +90,11 @@ class StreamReassembler {
     //! \brief Consider the data and assemble it
     //! \details Write any newly contiguous bytes into the _output stream
     void assemble_data();
+    size_t get_next_read_point() const { return _next_read_point; }
+    // |-----------------------------|
+    // | buffer_size |  window_size  |
+    // |         capacity            |
+    size_t window_size() const { return _capacity - _output.buffer_size(); }
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH
