@@ -25,7 +25,7 @@ class TCPReceiver {
     size_t _recent_abs_seqno = 0;  // For checkpoint in unwrap
     size_t _FIN_abs_seqno = 0;
 
-   public:
+  public:
     //! \brief Construct a TCP receiver
     //!
     //! \param capacity the maximum number of bytes that the receiver will

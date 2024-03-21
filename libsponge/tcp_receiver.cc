@@ -45,6 +45,4 @@ optional<WrappingInt32> TCPReceiver::ackno() const {
     return wrap(abs_ackno, _ISN);
 }
 
-size_t TCPReceiver::window_size() const {
-    return _reassembler.window_size();
-}
+size_t TCPReceiver::window_size() const { return _reassembler.window_size(); }

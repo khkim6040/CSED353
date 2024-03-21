@@ -34,18 +34,14 @@ uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
     uint64_t MOD = 1ull << 32;
     int64_t nr = n.raw_value();
     int64_t isnr = isn.raw_value();
-
     // For modulo operation in C++
     if (nr < isnr)
         nr += MOD;
-
     // 32-bits
     uint64_t diff = nr - isnr;
-
     if (diff >= checkpoint) {
         return diff;
     }
-
     // |diff| .... |diff + k*MOD| ............ |checkpoint| ............. |diff + (k+1)*MOD|
     //                          |<- left_gap ->|          |<- right_gap ->|
     // left_gap + right_gap = MOD(=2^32)
