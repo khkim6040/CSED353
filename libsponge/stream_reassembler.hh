@@ -90,6 +90,10 @@ class StreamReassembler {
     //! \details Write any newly contiguous bytes into the _output stream
     void assemble_data();
     size_t get_next_read_point() const { return _next_read_point; }
+    // |-----------------------------|
+    // | buffer_size |  window_size  |
+    // |         capacity            |
+    size_t window_size() const { return _capacity - _output.buffer_size(); }
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH

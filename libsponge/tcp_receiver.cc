@@ -39,17 +39,12 @@ optional<WrappingInt32> TCPReceiver::ackno() const {
     // If no SYN has been received, return empty
     if (!_has_SYN_arrived) {
         return {};
-        // return windows left edge
     }
-    size_t temp = _has_SYN_arrived + _reassembler.get_next_read_point();
-    if (temp == _FIN_abs_seqno) {
-        // std::cout << "unassembled_bytes: " << _reassembler.unassembled_bytes() << endl;
-        return wrap(temp + _has_FIN_arrived, _ISN);
-    }
-    return wrap(temp, _ISN);
+    size_t abs_ackno = _has_SYN_arrived + _reassembler.get_next_read_point();
+    abs_ackno = abs_ackno == _FIN_abs_seqno ? abs_ackno + _has_FIN_arrived : abs_ackno;
+    return wrap(abs_ackno, _ISN);
 }
 
 size_t TCPReceiver::window_size() const {
-    // return first unacceptable - first unassembled
-    return _capacity - stream_out().buffer_size();
+    return _reassembler.window_size();
 }
