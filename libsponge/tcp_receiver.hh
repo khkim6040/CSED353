@@ -21,11 +21,9 @@ class TCPReceiver {
     size_t _capacity;
     bool _has_SYN_arrived = false;
     bool _has_FIN_arrived = false;
-    WrappingInt32 _isn{0};
-    // uint64_t _first_unassembled = 0;
-    // uint64_t _first_unacceptable = 0;
-    uint64_t _recent_abs_seqno = 0;
-    uint64_t _FIN_abs_seqno = 0;
+    WrappingInt32 _ISN{0};
+    size_t _recent_abs_seqno = 0;  // For checkpoint in unwrap
+    size_t _FIN_abs_seqno = 0;
 
    public:
     //! \brief Construct a TCP receiver
