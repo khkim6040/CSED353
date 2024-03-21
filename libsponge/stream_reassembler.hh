@@ -19,7 +19,7 @@ class StreamReassembler {
     ByteStream _output;                       //!< The reassembled in-order byte stream
     size_t _capacity = 0;                     //!< The maximum number of bytes
     size_t _unassembled_count = 0;            //!< Number of unassembled bytes
-    size_t _next_read_point = 0;              //!< Indicate next to the already read point
+    size_t _next_read_point = 0;              //!< Indicate next to the already read point, which also stands the first unassembled point in the stream
     size_t _first_unread_point = 0;           //!< Indicate first unread point
     bool _ignore_flag = false;                //!< Tell whether any unacceptable byte occurred
     bool _is_first_unread_point_set = false;  //!< Used to set _first_unread_point each time data comes in
@@ -89,6 +89,7 @@ class StreamReassembler {
     //! \brief Consider the data and assemble it
     //! \details Write any newly contiguous bytes into the _output stream
     void assemble_data();
+    size_t get_next_read_point() const { return _next_read_point; }
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH
