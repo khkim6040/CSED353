@@ -1,13 +1,17 @@
 #ifndef SPONGE_LIBSPONGE_TCP_SENDER_HH
 #define SPONGE_LIBSPONGE_TCP_SENDER_HH
 
+#include <functional>
+#include <queue>
+
 #include "byte_stream.hh"
 #include "tcp_config.hh"
 #include "tcp_segment.hh"
+#include "util/buffer.cc"
+#include "util/buffer.hh"
 #include "wrapping_integers.hh"
 
-#include <functional>
-#include <queue>
+using namespace std;
 
 //! \brief The "sender" part of a TCP implementation.
 
@@ -16,7 +20,13 @@
 //! maintains the Retransmission Timer, and retransmits in-flight
 //! segments if the retransmission timer expires.
 class TCPSender {
-  private:
+   private:
+    // Outstanding buffer list
+    queue<TCPSegment> _outstanding_buffer{};
+    // Consecutive retransmission
+    uint64_t _consecutive_retransmiss_cnt{0};
+    // Window size
+    uint64_t rwnd{0};
     //! our initial sequence number, the number for our SYN.
     WrappingInt32 _isn;
 
@@ -32,7 +42,7 @@ class TCPSender {
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
 
-  public:
+   public:
     //! Initialize a TCPSender
     TCPSender(const size_t capacity = TCPConfig::DEFAULT_CAPACITY,
               const uint16_t retx_timeout = TCPConfig::TIMEOUT_DFLT,
