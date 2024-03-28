@@ -81,10 +81,12 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
         return;
     _timer.increment(ms_since_last_tick);
     if (_timer.is_expired()) {
-        // retransmission logic here
-        // send(_out_queue.front())
+        // Retransmit the oldest segment
+        TCPSegment oldest_seg = _outstanding_buffer.front();
+        send_segment(oldest_seg);
         // Set RTO double
-        // _consecutive_retransmiss_cnt++
+        _timer.double_timout_limit();
+        _consecutive_retransmiss_count++;
     }
 }
 
