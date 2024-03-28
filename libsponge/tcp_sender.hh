@@ -54,11 +54,14 @@ class TCPSender {
     // Outstanding buffer list
     queue<TCPSegment> _outstanding_buffer{};
     uint64_t _outstanding_buffer_size{0};
-    uint64_t _checkpoint{0};
+    // The most recent absolute ackno, also be used as checkpoint
+    uint64_t _recent_abs_ackno{0};
     // Consecutive retransmission
     uint64_t _consecutive_retransmiss_count{0};
     // Window size
     uint64_t _window_size{0};
+    bool has_syn_sent{false};
+    bool has_fin_sent{false};
     //! our initial sequence number, the number for our SYN.
     WrappingInt32 _isn;
 
@@ -97,6 +100,12 @@ class TCPSender {
 
     //! \brief Generate an empty-payload segment (useful for creating empty ACK segments)
     void send_empty_segment();
+
+    //! \brief Push a segment into the outstanding buffer
+    void buffer_push(TCPSegment segment);
+
+    //! \brief Increase the next sequence number by the size of the segment
+    void increase_next_seqno(size_t size) { _next_seqno += size; };
 
     //! \brief create and send segments to fill as much of the window as possible
     void fill_window();

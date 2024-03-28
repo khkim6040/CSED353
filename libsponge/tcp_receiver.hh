@@ -19,6 +19,7 @@ class TCPReceiver {
 
     //! The maximum number of bytes we'll store.
     size_t _capacity;
+    // TODO: change uppercase SYN&FIN to lowercase
     bool _has_SYN_arrived = false;
     bool _has_FIN_arrived = false;
     WrappingInt32 _ISN{0};

@@ -29,38 +29,48 @@ uint64_t TCPSender::bytes_in_flight() const {
 }
 
 void TCPSender::fill_window() {
-    // If Closed state, send SYN
-    TCPSegment seg;
-    if (next_seqno_absolute() == 0) {
-        seg.header().syn = true;
-        seg.header().seqno = next_seqno();  // Should be _isn
-        // _segments_out.push()
-        // increment _next_seqno
-    }
-    // Read payload from _stream as much as can min(PAYLOAD_MAX, window_size, _stream.size())
-    // End with FIN
+    while (next_seqno_absolute() < _recent_abs_ackno + _window_size) {
+        TCPSegment seg;
+        TCPHeader &header = seg.header();
+        header.seqno = next_seqno();
+        if (next_seqno_absolute() == 0) {
+            header.syn = true;
+            has_syn_sent = true;
+            _timer.fire();
+        }
+        size_t window_size = _recent_abs_ackno + _window_size - next_seqno_absolute();
+        size_t payload_size = min(window_size, static_cast<size_t>(TCPConfig::MAX_PAYLOAD_SIZE));
+        string payload = _stream.read(payload_size);
+        if (_stream.eof() && !has_fin_sent) {
+            header.fin = true;
+            has_fin_sent = true;
+        }
 
-    _outstanding_buffer.push(seg);
-    _next_seqno += seg.length_in_sequence_space();
-    _timer.fire();
+        if (seg.length_in_sequence_space() == 0) {
+            break;
+        }
+        increase_next_seqno(seg.length_in_sequence_space());
+        send_segment(seg);
+        buffer_push(seg);
+    }
 }
 
 //! \param ackno The remote receiver's ackno (acknowledgment number)
 //! \param window_size The remote receiver's advertised window size
 void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) {
     // set rwnd = min(1, window_size)
-    if (_checkpoint == 0) {
-        _checkpoint = _isn.raw_value();
+    if (_recent_abs_ackno == 0) {
+        _recent_abs_ackno = _isn.raw_value();
     }
     _window_size = window_size;
-    uint64_t abs_ackno = unwrap(ackno, _isn, _checkpoint);
+    size_t abs_ackno = unwrap(ackno, _isn, _recent_abs_ackno);
     while (!_outstanding_buffer.empty() && abs_ackno >= 1LL * _outstanding_buffer.front().header().seqno.raw_value() +
                                                             _outstanding_buffer.front().length_in_sequence_space()) {
         TCPSegment seg = _outstanding_buffer.front();
         _outstanding_buffer.pop();
         _outstanding_buffer_size -= seg.length_in_sequence_space();
     }
-    _checkpoint = abs_ackno;
+    _recent_abs_ackno = abs_ackno;
 
     if (_outstanding_buffer.empty()) {
         _timer.stop();
@@ -88,4 +98,9 @@ void TCPSender::send_empty_segment() {
     TCPSegment empty_seg;
     empty_seg.header().seqno = next_seqno();
     _segments_out.push(empty_seg);
+}
+
+void TCPSender::buffer_push(TCPSegment segment) {
+    _outstanding_buffer.push(segment);
+    _outstanding_buffer_size += segment.length_in_sequence_space();
 }
