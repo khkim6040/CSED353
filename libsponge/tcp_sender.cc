@@ -61,6 +61,10 @@ void TCPSender::fill_window() {
 void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) {
     _window_size = window_size;
     size_t abs_ackno = unwrap(ackno, _isn, _recent_abs_ackno);
+    // abs_ackno should be less than next_seqno_absolute()
+    if (abs_ackno > next_seqno_absolute()) {
+        return;
+    }
     while (!_outstanding_buffer.empty() &&
            abs_ackno >= 1LL * unwrap(_outstanding_buffer.front().header().seqno, _isn, _recent_abs_ackno) +
                             _outstanding_buffer.front().length_in_sequence_space()) {
