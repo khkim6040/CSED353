@@ -4,8 +4,6 @@
 #include "byte_stream.hh"
 #include "tcp_config.hh"
 #include "tcp_segment.hh"
-#include "util/buffer.cc"
-#include "util/buffer.hh"
 #include "wrapping_integers.hh"
 
 #include <functional>
@@ -50,7 +48,6 @@ class Timer {
 //! segments if the retransmission timer expires.
 class TCPSender {
   private:
-    Timer _timer;
     // Outstanding buffer list
     queue<TCPSegment> _outstanding_buffer{};
     uint64_t _outstanding_buffer_size{0};
@@ -73,6 +70,8 @@ class TCPSender {
 
     //! outgoing stream of bytes that have not yet been sent
     ByteStream _stream;
+
+    Timer _timer;
 
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
