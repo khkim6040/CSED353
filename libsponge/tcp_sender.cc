@@ -52,7 +52,8 @@ void TCPSender::fill_window() {
         increase_next_seqno(seg.length_in_sequence_space());
         send_segment(seg);
         buffer_push(seg);
-        _timer.fire();
+        if (!_timer.is_running())
+            _timer.fire();
     }
 }
 

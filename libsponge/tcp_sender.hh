@@ -24,23 +24,29 @@ class Timer {
         , _timeout_limit{_initial_retransmission_timeout}
         , _current_time{0}
         , _is_running{false} {};
-    void increment(const uint64_t tick) { _current_time += tick; };
-    bool is_expired() { return _is_running && _current_time >= _timeout_limit; };
+    void increment(const uint64_t tick) {
+        if (!_is_running)
+            return;
+        _current_time += tick;
+    };
     void reset() {
         _timeout_limit = _initial_timeout;
         _current_time = 0;
-        _is_running = true;
     };
     void double_timout_limit() {
         _timeout_limit *= 2;
         _current_time = 0;
     }
-    bool is_running() { return _is_running; };
-    void fire() { _is_running = true; };
+    void fire() {
+        _is_running = true;
+        _current_time = 0;
+    };
     void stop() {
         _is_running = false;
         _current_time = 0;
     };
+    bool is_running() { return _is_running; };
+    bool is_expired() { return _is_running && _current_time >= _timeout_limit; };
 };
 
 //! \brief The "sender" part of a TCP implementation.
