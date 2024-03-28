@@ -36,7 +36,6 @@ void TCPSender::fill_window() {
         if (next_seqno_absolute() == 0) {
             header.syn = true;
             has_syn_sent = true;
-            _timer.fire();
         }
         size_t window_size = _recent_abs_ackno + _window_size - next_seqno_absolute();
         size_t payload_size = min(window_size, static_cast<size_t>(TCPConfig::MAX_PAYLOAD_SIZE));
@@ -53,6 +52,7 @@ void TCPSender::fill_window() {
         increase_next_seqno(seg.length_in_sequence_space());
         send_segment(seg);
         buffer_push(seg);
+        _timer.fire();
     }
 }
 
