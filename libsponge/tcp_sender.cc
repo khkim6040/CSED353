@@ -67,6 +67,9 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
         TCPSegment seg = _outstanding_buffer.front();
         _outstanding_buffer.pop();
         _outstanding_buffer_size -= seg.length_in_sequence_space();
+        // Reset timer and consecutive retransmission count
+        _timer.reset();
+        _consecutive_retransmiss_count = 0;
     }
     _recent_abs_ackno = abs_ackno;
 

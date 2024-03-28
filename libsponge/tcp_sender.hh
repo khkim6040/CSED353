@@ -13,13 +13,13 @@ using namespace std;
 
 class Timer {
   private:
-    const uint32_t _initial_timeout;
+    const uint64_t _initial_timeout;
     uint64_t _timeout_limit;
     uint64_t _current_time;
     bool _is_running;
 
   public:
-    Timer(uint32_t _initial_retransmission_timeout)
+    Timer(uint64_t _initial_retransmission_timeout)
         : _initial_timeout{_initial_retransmission_timeout}
         , _timeout_limit{_initial_retransmission_timeout}
         , _current_time{0}
@@ -37,7 +37,10 @@ class Timer {
     }
     bool is_running() { return _is_running; };
     void fire() { _is_running = true; };
-    void stop() { _is_running = false; };
+    void stop() {
+        _is_running = false;
+        _current_time = 0;
+    };
 };
 
 //! \brief The "sender" part of a TCP implementation.
