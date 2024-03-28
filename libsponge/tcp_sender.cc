@@ -29,21 +29,21 @@ uint64_t TCPSender::bytes_in_flight() const {
 }
 
 void TCPSender::fill_window() {
-    while (!has_syn_sent || next_seqno_absolute() < _recent_abs_ackno + _window_size) {
+    while (!_has_syn_sent || next_seqno_absolute() < _recent_abs_ackno + _window_size) {
         TCPSegment seg;
         TCPHeader &header = seg.header();
         header.seqno = next_seqno();
         if (next_seqno_absolute() == 0) {
             header.syn = true;
-            has_syn_sent = true;
+            _has_syn_sent = true;
         }
         size_t window_size = _recent_abs_ackno + _window_size - next_seqno_absolute();
         size_t payload_size = min(window_size, static_cast<size_t>(TCPConfig::MAX_PAYLOAD_SIZE));
         string payload = _stream.read(payload_size);
         seg.payload() = Buffer(move(payload));
-        if (_stream.eof() && !has_fin_sent && window_size > seg.length_in_sequence_space()) {
+        if (_stream.eof() && !_has_fin_sent && window_size > seg.length_in_sequence_space()) {
             header.fin = true;
-            has_fin_sent = true;
+            _has_fin_sent = true;
         }
 
         if (seg.length_in_sequence_space() == 0) {
