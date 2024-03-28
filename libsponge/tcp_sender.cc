@@ -29,7 +29,7 @@ uint64_t TCPSender::bytes_in_flight() const {
 }
 
 void TCPSender::fill_window() {
-    while (next_seqno_absolute() < _recent_abs_ackno + _window_size) {
+    while (!has_syn_sent || next_seqno_absolute() < _recent_abs_ackno + _window_size) {
         TCPSegment seg;
         TCPHeader &header = seg.header();
         header.seqno = next_seqno();
@@ -41,7 +41,8 @@ void TCPSender::fill_window() {
         size_t window_size = _recent_abs_ackno + _window_size - next_seqno_absolute();
         size_t payload_size = min(window_size, static_cast<size_t>(TCPConfig::MAX_PAYLOAD_SIZE));
         string payload = _stream.read(payload_size);
-        if (_stream.eof() && !has_fin_sent) {
+        seg.payload() = Buffer(move(payload));
+        if (_stream.eof() && !has_fin_sent && window_size > seg.length_in_sequence_space()) {
             header.fin = true;
             has_fin_sent = true;
         }
@@ -58,14 +59,11 @@ void TCPSender::fill_window() {
 //! \param ackno The remote receiver's ackno (acknowledgment number)
 //! \param window_size The remote receiver's advertised window size
 void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) {
-    // set rwnd = min(1, window_size)
-    if (_recent_abs_ackno == 0) {
-        _recent_abs_ackno = _isn.raw_value();
-    }
     _window_size = window_size;
     size_t abs_ackno = unwrap(ackno, _isn, _recent_abs_ackno);
-    while (!_outstanding_buffer.empty() && abs_ackno >= 1LL * _outstanding_buffer.front().header().seqno.raw_value() +
-                                                            _outstanding_buffer.front().length_in_sequence_space()) {
+    while (!_outstanding_buffer.empty() &&
+           abs_ackno >= 1LL * unwrap(_outstanding_buffer.front().header().seqno, _isn, _recent_abs_ackno) +
+                            _outstanding_buffer.front().length_in_sequence_space()) {
         TCPSegment seg = _outstanding_buffer.front();
         _outstanding_buffer.pop();
         _outstanding_buffer_size -= seg.length_in_sequence_space();
