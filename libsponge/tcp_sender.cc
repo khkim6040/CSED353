@@ -59,7 +59,8 @@ void TCPSender::fill_window() {
 //! \param ackno The remote receiver's ackno (acknowledgment number)
 //! \param window_size The remote receiver's advertised window size
 void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) {
-    _window_size = window_size;
+    _window_size = max(uint16_t{1}, window_size);
+    _is_window_zero = window_size == 0;
     size_t abs_ackno = unwrap(ackno, _isn, _recent_abs_ackno);
     // abs_ackno should be less than next_seqno_absolute()
     if (abs_ackno > next_seqno_absolute()) {
@@ -92,8 +93,12 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
         TCPSegment oldest_seg = _outstanding_buffer.front();
         send_segment(oldest_seg);
         // Set RTO double
-        _timer.double_timout_limit();
-        _consecutive_retransmiss_count++;
+        if (_is_window_zero) {
+            _timer.reset();
+        } else {
+            _timer.double_timout_limit();
+            _consecutive_retransmiss_count++;
+        }
     }
 }
 

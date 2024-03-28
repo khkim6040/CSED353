@@ -60,6 +60,7 @@ class TCPSender {
     uint64_t _consecutive_retransmiss_count{0};
     // Window size
     uint64_t _window_size{0};
+    bool _is_window_zero{false};
     bool has_syn_sent{false};
     bool has_fin_sent{false};
     //! our initial sequence number, the number for our SYN.
