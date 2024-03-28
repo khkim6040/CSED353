@@ -1,9 +1,6 @@
 #ifndef SPONGE_LIBSPONGE_TCP_SENDER_HH
 #define SPONGE_LIBSPONGE_TCP_SENDER_HH
 
-#include <functional>
-#include <queue>
-
 #include "byte_stream.hh"
 #include "tcp_config.hh"
 #include "tcp_segment.hh"
@@ -11,7 +8,39 @@
 #include "util/buffer.hh"
 #include "wrapping_integers.hh"
 
+#include <functional>
+#include <queue>
+
 using namespace std;
+
+class Timer {
+  private:
+    const uint32_t _initial_timeout;
+    uint64_t _timeout_limit;
+    uint64_t _current_time;
+    bool _is_running;
+
+  public:
+    Timer(uint32_t _initial_retransmission_timeout)
+        : _initial_timeout{_initial_retransmission_timeout}
+        , _timeout_limit{_initial_retransmission_timeout}
+        , _current_time{0}
+        , _is_running{false} {};
+    void increment(const uint64_t tick) { _current_time += tick; };
+    bool is_expired() { return _is_running && _current_time >= _timeout_limit; };
+    void reset() {
+        _timeout_limit = _initial_timeout;
+        _current_time = 0;
+        _is_running = true;
+    };
+    void double_timout_limit() {
+        _timeout_limit *= 2;
+        _current_time = 0;
+    }
+    bool is_running() { return _is_running; };
+    void fire() { _is_running = true; };
+    void stop() { _is_running = false; };
+};
 
 //! \brief The "sender" part of a TCP implementation.
 
@@ -20,13 +49,16 @@ using namespace std;
 //! maintains the Retransmission Timer, and retransmits in-flight
 //! segments if the retransmission timer expires.
 class TCPSender {
-   private:
+  private:
+    Timer _timer;
     // Outstanding buffer list
     queue<TCPSegment> _outstanding_buffer{};
+    uint64_t _outstanding_buffer_size{0};
+    uint64_t _checkpoint{0};
     // Consecutive retransmission
-    uint64_t _consecutive_retransmiss_cnt{0};
+    uint64_t _consecutive_retransmiss_count{0};
     // Window size
-    uint64_t rwnd{0};
+    uint64_t _window_size{0};
     //! our initial sequence number, the number for our SYN.
     WrappingInt32 _isn;
 
@@ -42,7 +74,7 @@ class TCPSender {
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
 
-   public:
+  public:
     //! Initialize a TCPSender
     TCPSender(const size_t capacity = TCPConfig::DEFAULT_CAPACITY,
               const uint16_t retx_timeout = TCPConfig::TIMEOUT_DFLT,
@@ -59,6 +91,9 @@ class TCPSender {
 
     //! \brief A new acknowledgment was received
     void ack_received(const WrappingInt32 ackno, const uint16_t window_size);
+
+    //! \brief Send a segment
+    void send_segment(TCPSegment segment);
 
     //! \brief Generate an empty-payload segment (useful for creating empty ACK segments)
     void send_empty_segment();
