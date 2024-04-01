@@ -107,7 +107,14 @@ class TCPSender {
     //! \brief set _window_size and _is_window_zero
     void handle_window_size(const uint16_t window_size);
 
-    //! \brief remove segments from the outstanding buffer that have been acknowledged
+    /**
+     * @brief Update the outstanding buffer by removing segments that have been acknowledged.
+     *
+     * It removes the acknowledged segments from the outstanding buffer and updates the buffer size.
+     * Additionally, it resets the timer and consecutive retransmission count.
+     *
+     * @param abs_ackno The absolute sequence number of the acknowledgment received.
+     */
     void update_outstanding_buffer(const uint64_t abs_ackno);
 
     //! \brief return true if abs_ackno is greater than seqno plus length in the buffer queue
@@ -125,13 +132,29 @@ class TCPSender {
     //! \brief Increase the next sequence number by the size of the segment
     void increase_next_seqno(size_t size) { _next_seqno += size; };
 
-    //! \brief create and send segments to fill as much of the window as possible
+    /**
+     * @brief Create and send segments to fill as much of the window as possible
+     *
+     * Fills the sending window with TCP segments until the window is full or there is no more data to send.
+     * This function is responsible for creating TCP segments, increasing the sequence number, sending the segments,
+     * and pushing them into the buffer. It also fires the timer if it is not already running.
+     */
     void fill_window();
 
     //! \brief return true if there is still data to be sent
     bool can_send_more_data() const;
 
-    //! \brief create a segment with the current state
+    /**
+     * @brief Creates a TCP segment.
+     *
+     * This function creates a TCP segment with the following properties:
+     * - The sequence number is set to the next sequence number.
+     * - The SYN flag is set if needed.
+     * - The payload is read by amount of the window right edge.
+     * - The FIN flag is set if needed.
+     *
+     * @return The created TCP segment.
+     */
     TCPSegment create_segment();
 
     //! \brief set the SYN flag if needed
