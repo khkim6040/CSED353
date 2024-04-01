@@ -65,7 +65,7 @@ size_t TCPSender::calculate_window_right_edge() const {
     return _recent_abs_ackno + _window_size - next_seqno_absolute();
 }
 
-string TCPSender::read_payload(size_t window_right_edge) {
+string TCPSender::read_payload(const size_t window_right_edge) {
     size_t payload_size = min(window_right_edge, static_cast<size_t>(TCPConfig::MAX_PAYLOAD_SIZE));
     return _stream.read(payload_size);
 }

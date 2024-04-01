@@ -45,8 +45,8 @@ class Timer {
         _is_running = false;
         _current_time = 0;
     };
-    bool is_running() { return _is_running; };
-    bool is_expired() { return _is_running && _current_time >= _timeout_limit; };
+    bool is_running() const { return _is_running; };
+    bool is_expired() const { return _is_running && _current_time >= _timeout_limit; };
 };
 
 //! \brief The "sender" part of a TCP implementation.
@@ -164,7 +164,7 @@ class TCPSender {
     size_t calculate_window_right_edge() const;
 
     //! \brief read payload from the stream
-    string read_payload(size_t window_right_edge);
+    string read_payload(const size_t window_right_edge);
 
     //! \brief set the FIN flag if needed
     void set_fin_flag_if_needed(TCPHeader &header, const TCPSegment &segment, size_t window_right_edge);
