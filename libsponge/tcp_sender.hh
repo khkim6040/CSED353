@@ -65,7 +65,7 @@ class TCPSender {
     // Consecutive retransmission
     uint64_t _consecutive_retransmiss_count{0};
     // Window size
-    uint64_t _window_size{0};
+    uint16_t _window_size{0};
     bool _is_window_zero{false};
     bool _has_syn_sent{false};
     bool _has_fin_sent{false};
@@ -104,6 +104,15 @@ class TCPSender {
     //! \brief A new acknowledgment was received
     void ack_received(const WrappingInt32 ackno, const uint16_t window_size);
 
+    //! \brief set _window_size and _is_window_zero
+    void handle_window_size(const uint16_t window_size);
+
+    //! \brief remove segments from the outstanding buffer that have been acknowledged
+    void update_outstanding_buffer(const uint64_t abs_ackno);
+
+    //! \brief return true if abs_ackno is greater than seqno plus length in the buffer queue
+    bool is_ackno_greater_than_seqno_plus_length(const uint64_t abs_ackno, const TCPSegment &seg) const;
+
     //! \brief Send a segment
     void send_segment(TCPSegment segment);
 
@@ -118,6 +127,24 @@ class TCPSender {
 
     //! \brief create and send segments to fill as much of the window as possible
     void fill_window();
+
+    //! \brief return true if there is still data to be sent
+    bool can_send_more_data() const;
+
+    //! \brief create a segment with the current state
+    TCPSegment create_segment();
+
+    //! \brief set the SYN flag if needed
+    void set_syn_flag_if_needed(TCPHeader &header);
+
+    //! \brief return the right edge seqno of the window
+    size_t calculate_window_right_edge() const;
+
+    //! \brief read payload from the stream
+    string read_payload(size_t window_right_edge);
+
+    //! \brief set the FIN flag if needed
+    void set_fin_flag_if_needed(TCPHeader &header, const TCPSegment &segment, size_t window_right_edge);
 
     //! \brief Notifies the TCPSender of the passage of time
     void tick(const size_t ms_since_last_tick);
