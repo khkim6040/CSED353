@@ -12,17 +12,18 @@ void DUMMY_CODE(Targs &&.../* unused */) {}
 
 using namespace std;
 
-size_t TCPConnection::remaining_outbound_capacity() const { return {}; }
+size_t TCPConnection::remaining_outbound_capacity() const { return _sender.stream_in().remaining_capacity(); }
 
-size_t TCPConnection::bytes_in_flight() const { return {}; }
+size_t TCPConnection::bytes_in_flight() const { return _sender.bytes_in_flight(); }
 
-size_t TCPConnection::unassembled_bytes() const { return {}; }
+size_t TCPConnection::unassembled_bytes() const { return _receiver.unassembled_bytes(); }
 
-size_t TCPConnection::time_since_last_segment_received() const { return {}; }
+size_t TCPConnection::time_since_last_segment_received() const { return _time_since_last_segment_received; }
 
 void TCPConnection::segment_received(const TCPSegment &seg) {
     if (seg.header().rst) {
         // TODO: set in_bound, out_bound stream to error state
+        _RST_flag = true;
         _is_active = false;
         return;
     }
@@ -44,20 +45,40 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
         _sender.send_empty_segment();
     }
 
+    _time_since_last_segment_received = 0;
     send_packet();
 }
 
-bool TCPConnection::active() const { return _is_active; }
+bool TCPConnection::active() const {
+    if (_RST_flag) {
+        return false;
+    } else if (_is_active) {
+        // TODO: remove this
+        return true;
+    } else {
+        // TODO: fix this
+        return false;
+    }
+}
 
 size_t TCPConnection::write(const string &data) {
-    DUMMY_CODE(data);
-    return {};
+    size_t written = _sender.stream_in().write(data);
+    _sender.fill_window();
+    send_packet();
+    return written;
 }
 
 //! \param[in] ms_since_last_tick number of milliseconds since the last call to this method
-void TCPConnection::tick(const size_t ms_since_last_tick) { DUMMY_CODE(ms_since_last_tick); }
+void TCPConnection::tick(const size_t ms_since_last_tick) {
+    _time_since_last_segment_received += ms_since_last_tick;
+    _sender.tick(ms_since_last_tick);
+    if (_time_since_last_segment_received >= 10 * _cfg.rt_timeout && !_receiver.stream_out().input_ended()) {
+        _is_active = false;
+    }
+    send_packet();
+}
 
-void TCPConnection::end_input_stream() {}
+void TCPConnection::end_input_stream() { _sender.stream_in().end_input(); }
 
 void TCPConnection::connect() {
     _sender.fill_window();
