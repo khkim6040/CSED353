@@ -21,6 +21,8 @@ class TCPConnection {
     //! in case the remote TCPConnection doesn't know we've received its whole stream?
     bool _linger_after_streams_finish{true};
 
+    bool _is_active{false};
+
   public:
     //! \name "Input" interface for the writer
     //!@{
@@ -44,6 +46,8 @@ class TCPConnection {
 
     //! \brief The inbound byte stream received from the peer
     ByteStream &inbound_stream() { return _receiver.stream_out(); }
+
+    void send_packet();
     //!@}
 
     //! \name Accessors used for testing
