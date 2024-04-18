@@ -189,6 +189,8 @@ class TCPSender {
     //! which will need to fill in the fields that are set by the TCPReceiver
     //! (ackno and window size) before sending.
     std::queue<TCPSegment> &segments_out() { return _segments_out; }
+
+    bool has_fin_sent() const { return _has_fin_sent; }
     //!@}
 
     //! \name What is the next sequence number? (used for testing)
