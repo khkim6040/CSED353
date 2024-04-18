@@ -23,9 +23,9 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
     if (resize_flag) {
         resize_vectors(data_length);
     }
-    // Push data into stream
+    // Push data into custom stream
     handle_data(data, index, stream_limit_index, data_length);
-    // Assemble data
+    // Assemble data and write it into the output stream
     assemble_data();
     // Handle eof argument
     if (eof)
