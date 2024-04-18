@@ -45,6 +45,11 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
         _sender.send_empty_segment();
     }
 
+    // passive close case
+    if (_receiver.stream_out().input_ended()) {
+        _linger_after_streams_finish = false;
+    }
+
     _time_since_last_segment_received = 0;
     send_packet();
 }
@@ -72,13 +77,23 @@ size_t TCPConnection::write(const string &data) {
 void TCPConnection::tick(const size_t ms_since_last_tick) {
     _time_since_last_segment_received += ms_since_last_tick;
     _sender.tick(ms_since_last_tick);
-    if (_time_since_last_segment_received >= 10 * _cfg.rt_timeout && !_receiver.stream_out().input_ended()) {
+    // TODO: Fix this
+    // ----------
+    if (unassembled_bytes() == 0 && _receiver.stream_out().input_ended() && _sender.bytes_in_flight() == 0 &&
+        _sender.has_fin_sent() && _receiver.ackno().has_value() && _receiver.ackno().value() == _sender.next_seqno()) {
+        if (_time_since_last_segment_received >= 10 * _cfg.rt_timeout) {
+        }
         _is_active = false;
     }
+    // ----------
     send_packet();
 }
 
-void TCPConnection::end_input_stream() { _sender.stream_in().end_input(); }
+void TCPConnection::end_input_stream() {
+    _sender.stream_in().end_input();
+    _sender.fill_window();
+    send_packet();
+}
 
 void TCPConnection::connect() {
     _sender.fill_window();
