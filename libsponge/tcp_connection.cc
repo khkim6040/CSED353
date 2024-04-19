@@ -93,13 +93,26 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
     _sender.tick(ms_since_last_tick);
     // TODO: Fix this
     // ----------
+    // retransmission limit reached
+    if (_sender.consecutive_retransmissions() > TCPConfig::MAX_RETX_ATTEMPTS) {
+        _sender.stream_in().set_error();
+        _receiver.stream_out().set_error();
+        _RST_flag = true;
+        _is_active = false;
+        _sender.send_empty_segment();
+        send_packet();
+        return;
+    }
+    // active close case: all data has been sent and received
     if (unassembled_bytes() == 0 && _receiver.stream_out().input_ended() && _sender.bytes_in_flight() == 0 &&
         _sender.has_fin_sent() && _receiver.ackno().has_value() && _receiver.ackno().value() == _sender.next_seqno()) {
+        // linger after streams finish
         if (_linger_after_streams_finish) {
             if (_time_since_last_segment_received >= 10 * _cfg.rt_timeout) {
                 _is_active = false;
             }
         } else {
+            // passive close case
             _is_active = false;
         }
     }
@@ -138,7 +151,16 @@ void TCPConnection::send_packet() {
 
     while (!_sender.segments_out().empty()) {
         TCPSegment seg = _sender.segments_out().front();
+        // When RST flag is set, send segment only with RST flag
+        if (_RST_flag) {
+            seg.header().rst = true;
+            _sender.segments_out().pop();
+            _segments_out.push(seg);
+            return;
+        }
+
         if (_receiver.ackno().has_value()) {
+            // Else, send segment with other flags
             seg.header().ack = true;
             seg.header().ackno = _receiver.ackno().value();
             seg.header().win = min(size_t(numeric_limits<uint16_t>::max()), _receiver.window_size());
