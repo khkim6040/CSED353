@@ -26,6 +26,10 @@ class TCPConnection {
     size_t _time_since_last_segment_received{0};
     bool _RST_flag{false};
 
+    void send_packet();
+
+    void handle_error(bool sending);
+
   public:
     //! \name "Input" interface for the writer
     //!@{
@@ -50,7 +54,6 @@ class TCPConnection {
     //! \brief The inbound byte stream received from the peer
     ByteStream &inbound_stream() { return _receiver.stream_out(); }
 
-    void send_packet();
     //!@}
 
     //! \name Accessors used for testing
