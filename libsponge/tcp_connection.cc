@@ -45,13 +45,13 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     // send empty segment to ack if there is any non-zero length segment to send
     // it will ignore the ackno, whose size is 0
     if (seg.length_in_sequence_space() != 0) {
-        _sender.send_empty_segment();
-    }
-
-    // receive SYN before sending SYN
-    if (seg.header().syn && !_sender.has_sin_sent()) {
-        // send SYN/ACK
-        _sender.fill_window();
+        if (seg.header().syn && !_sender.has_sin_sent()) {
+            // receive SYN before sending SYN
+            // send SYN/ACK
+            _sender.fill_window();
+        } else {
+            _sender.send_empty_segment();
+        }
     }
 
     // passive close case: outbound stream has not sent FIN && inbound stream has ended after received segment
