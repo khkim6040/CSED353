@@ -21,12 +21,15 @@ size_t TCPConnection::unassembled_bytes() const { return _receiver.unassembled_b
 size_t TCPConnection::time_since_last_segment_received() const { return _time_since_last_segment_received; }
 
 void TCPConnection::segment_received(const TCPSegment &seg) {
+    // Reset case: RST segment or ack when no SYN has been sent yet
     if (seg.header().rst) {
-        // TODO: set in_bound, out_bound stream to error state
+        _sender.stream_in().set_error();
+        _receiver.stream_out().set_error();
         _RST_flag = true;
         _is_active = false;
         return;
     }
+
     _receiver.segment_received(seg);  // send seg to receiver
     // update sender's ackno, window size if ack is set
     if (seg.header().ack) {
@@ -45,7 +48,13 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
         _sender.send_empty_segment();
     }
 
-    // passive close case: outbound stream has not sent FIN && inbound stream has ended
+    // receive SYN before sending SYN
+    if (seg.header().syn && !_sender.has_sin_sent()) {
+        // send SYN/ACK
+        _sender.fill_window();
+    }
+
+    // passive close case: outbound stream has not sent FIN && inbound stream has ended after received segment
     if (!_sender.has_fin_sent() && _receiver.stream_out().input_ended()) {
         _linger_after_streams_finish = false;
     }
@@ -102,7 +111,6 @@ void TCPConnection::end_input_stream() {
 
 void TCPConnection::connect() {
     _sender.fill_window();
-    _is_active = true;
     send_packet();
 }
 
@@ -129,7 +137,7 @@ void TCPConnection::send_packet() {
         if (_receiver.ackno().has_value()) {
             seg.header().ack = true;
             seg.header().ackno = _receiver.ackno().value();
-            seg.header().win = _receiver.window_size();
+            seg.header().win = min(size_t(numeric_limits<uint16_t>::max()), _receiver.window_size());
         }
         _sender.segments_out().pop();
         // send seg to network

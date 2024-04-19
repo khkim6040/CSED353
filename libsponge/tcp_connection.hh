@@ -21,7 +21,7 @@ class TCPConnection {
     //! in case the remote TCPConnection doesn't know we've received its whole stream?
     bool _linger_after_streams_finish{true};
 
-    bool _is_active{false};  // TODO: remove this
+    bool _is_active{true};  // TODO: divide into combination of variables
 
     size_t _time_since_last_segment_received{0};
     bool _RST_flag{false};

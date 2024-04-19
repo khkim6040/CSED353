@@ -191,6 +191,7 @@ class TCPSender {
     std::queue<TCPSegment> &segments_out() { return _segments_out; }
 
     bool has_fin_sent() const { return _has_fin_sent; }
+    bool has_sin_sent() const { return _has_syn_sent; }
     //!@}
 
     //! \name What is the next sequence number? (used for testing)
