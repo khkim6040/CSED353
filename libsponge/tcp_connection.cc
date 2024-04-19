@@ -40,16 +40,17 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     }
 
     // send empty segment to ack if there is any non-zero length segment to send
-    // it will ignore the ackno
+    // it will ignore the ackno, whose size is 0
     if (seg.length_in_sequence_space() != 0) {
         _sender.send_empty_segment();
     }
 
-    // passive close case
-    if (_receiver.stream_out().input_ended()) {
+    // passive close case: outbound stream has not sent FIN && inbound stream has ended
+    if (!_sender.has_fin_sent() && _receiver.stream_out().input_ended()) {
         _linger_after_streams_finish = false;
     }
 
+    // reset elapsed time
     _time_since_last_segment_received = 0;
     send_packet();
 }
@@ -81,9 +82,13 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
     // ----------
     if (unassembled_bytes() == 0 && _receiver.stream_out().input_ended() && _sender.bytes_in_flight() == 0 &&
         _sender.has_fin_sent() && _receiver.ackno().has_value() && _receiver.ackno().value() == _sender.next_seqno()) {
-        if (_time_since_last_segment_received >= 10 * _cfg.rt_timeout) {
+        if (_linger_after_streams_finish) {
+            if (_time_since_last_segment_received >= 10 * _cfg.rt_timeout) {
+                _is_active = false;
+            }
+        } else {
+            _is_active = false;
         }
-        _is_active = false;
     }
     // ----------
     send_packet();
