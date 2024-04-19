@@ -34,6 +34,10 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     // update sender's ackno, window size if ack is set
     if (seg.header().ack) {
         _sender.ack_received(seg.header().ackno, seg.header().win);
+        // fill window if there is left data to send
+        if (_sender.has_sin_sent()) {
+            _sender.fill_window();
+        }
     }
 
     // keep-alive segment
