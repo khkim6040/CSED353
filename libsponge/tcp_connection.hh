@@ -28,7 +28,8 @@ class TCPConnection {
 
     void send_packet();
 
-    void handle_error(bool sending);
+    // Handle a RST segment received from the peer with a sending option
+    void handle_RST(bool sending);
 
   public:
     //! \name "Input" interface for the writer
