@@ -20,14 +20,13 @@ class TCPConnection {
     //! for 10 * _cfg.rt_timeout milliseconds after both streams have ended,
     //! in case the remote TCPConnection doesn't know we've received its whole stream?
     bool _linger_after_streams_finish{true};
-
-    bool _is_active{true};  // TODO: divide into combination of variables
-
     size_t _time_since_last_segment_received{0};
+    // Whether the connection is still active
+    bool _is_active{true};
+    // Set when a RST segment is sent or received
     bool _RST_flag{false};
-
+    // Send packet with flags
     void send_packet();
-
     // Handle a RST segment received from the peer with a sending option
     void handle_RST(bool sending);
 
