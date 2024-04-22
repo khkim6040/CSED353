@@ -16,15 +16,23 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
         _has_syn_arrived = true;
         _isn = seg.header().seqno;
     }
+
+    // Ignore segment if no SYN has arrived
+    if (!_has_syn_arrived) {
+        return;
+    }
+
     // If FIN has arrived, set FIN_abs_seqno to compare with ackno
     if (!_has_fin_arrived && fin_flag) {
         _has_fin_arrived = true;
         _fin_abs_seqno = unwrap(seg.header().seqno + seg.length_in_sequence_space() - 1, _isn, _recent_abs_seqno);
     }
-    // Unavailable case
-    if (!_has_syn_arrived || seg.length_in_sequence_space() == 0) {
+
+    // Ignore empty segment
+    if (seg.length_in_sequence_space() == 0) {
         return;
     }
+
     // Unwrap seg seqno
     size_t abs_seqno = unwrap(seg.header().seqno, _isn, _recent_abs_seqno);
     _recent_abs_seqno = abs_seqno;

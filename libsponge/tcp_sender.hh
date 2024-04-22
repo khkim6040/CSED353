@@ -86,6 +86,59 @@ class TCPSender {
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
 
+    //! \brief return true if there is still data to be sent
+    bool can_send_more_data() const;
+
+    /**
+     * @brief Creates a TCP segment.
+     *
+     * This function creates a TCP segment with the following properties:
+     * - The sequence number is set to the next sequence number.
+     * - The SYN flag is set if needed.
+     * - The payload is read by amount of the window right edge.
+     * - The FIN flag is set if needed.
+     *
+     * @return The created TCP segment.
+     */
+    TCPSegment create_segment();
+
+    //! \brief Increase the next sequence number by the size of the segment
+    void increase_next_seqno(size_t size) { _next_seqno += size; };
+
+    //! \brief Send a segment
+    void send_segment(TCPSegment segment);
+
+    //! \brief Push a segment into the outstanding buffer
+    void buffer_push(TCPSegment segment);
+
+    //! \brief set _window_size and _is_window_zero
+    void handle_window_size(const uint16_t window_size);
+
+    /**
+     * @brief Update the outstanding buffer by removing segments that have been acknowledged.
+     *
+     * It removes the acknowledged segments from the outstanding buffer and updates the buffer size.
+     * Additionally, it resets the timer and consecutive retransmission count.
+     *
+     * @param abs_ackno The absolute sequence number of the acknowledgment received.
+     */
+    void update_outstanding_buffer(const uint64_t abs_ackno);
+
+    //! \brief return true if abs_ackno is greater than seqno plus length in the buffer queue
+    bool is_ackno_greater_than_seqno_plus_length(const uint64_t abs_ackno, const TCPSegment &seg) const;
+
+    //! \brief set the SYN flag if needed
+    void set_syn_flag_if_needed(TCPHeader &header);
+
+    //! \brief return the right edge seqno of the window
+    size_t calculate_window_right_edge() const;
+
+    //! \brief read payload from the stream
+    string read_payload(const size_t window_right_edge);
+
+    //! \brief set the FIN flag if needed
+    void set_fin_flag_if_needed(TCPHeader &header, const TCPSegment &segment, size_t window_right_edge);
+
   public:
     //! Initialize a TCPSender
     TCPSender(const size_t capacity = TCPConfig::DEFAULT_CAPACITY,
@@ -104,33 +157,8 @@ class TCPSender {
     //! \brief A new acknowledgment was received
     void ack_received(const WrappingInt32 ackno, const uint16_t window_size);
 
-    //! \brief set _window_size and _is_window_zero
-    void handle_window_size(const uint16_t window_size);
-
-    /**
-     * @brief Update the outstanding buffer by removing segments that have been acknowledged.
-     *
-     * It removes the acknowledged segments from the outstanding buffer and updates the buffer size.
-     * Additionally, it resets the timer and consecutive retransmission count.
-     *
-     * @param abs_ackno The absolute sequence number of the acknowledgment received.
-     */
-    void update_outstanding_buffer(const uint64_t abs_ackno);
-
-    //! \brief return true if abs_ackno is greater than seqno plus length in the buffer queue
-    bool is_ackno_greater_than_seqno_plus_length(const uint64_t abs_ackno, const TCPSegment &seg) const;
-
-    //! \brief Send a segment
-    void send_segment(TCPSegment segment);
-
     //! \brief Generate an empty-payload segment (useful for creating empty ACK segments)
     void send_empty_segment();
-
-    //! \brief Push a segment into the outstanding buffer
-    void buffer_push(TCPSegment segment);
-
-    //! \brief Increase the next sequence number by the size of the segment
-    void increase_next_seqno(size_t size) { _next_seqno += size; };
 
     /**
      * @brief Create and send segments to fill as much of the window as possible
@@ -140,34 +168,6 @@ class TCPSender {
      * and pushing them into the buffer. It also fires the timer if it is not already running.
      */
     void fill_window();
-
-    //! \brief return true if there is still data to be sent
-    bool can_send_more_data() const;
-
-    /**
-     * @brief Creates a TCP segment.
-     *
-     * This function creates a TCP segment with the following properties:
-     * - The sequence number is set to the next sequence number.
-     * - The SYN flag is set if needed.
-     * - The payload is read by amount of the window right edge.
-     * - The FIN flag is set if needed.
-     *
-     * @return The created TCP segment.
-     */
-    TCPSegment create_segment();
-
-    //! \brief set the SYN flag if needed
-    void set_syn_flag_if_needed(TCPHeader &header);
-
-    //! \brief return the right edge seqno of the window
-    size_t calculate_window_right_edge() const;
-
-    //! \brief read payload from the stream
-    string read_payload(const size_t window_right_edge);
-
-    //! \brief set the FIN flag if needed
-    void set_fin_flag_if_needed(TCPHeader &header, const TCPSegment &segment, size_t window_right_edge);
 
     //! \brief Notifies the TCPSender of the passage of time
     void tick(const size_t ms_since_last_tick);
@@ -189,6 +189,10 @@ class TCPSender {
     //! which will need to fill in the fields that are set by the TCPReceiver
     //! (ackno and window size) before sending.
     std::queue<TCPSegment> &segments_out() { return _segments_out; }
+
+    bool has_fin_sent() const { return _has_fin_sent; }
+    bool has_sin_sent() const { return _has_syn_sent; }
+    bool has_fin_acked() const { return _has_fin_sent && _recent_abs_ackno == _next_seqno; }
     //!@}
 
     //! \name What is the next sequence number? (used for testing)

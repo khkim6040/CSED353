@@ -26,6 +26,43 @@ class StreamReassembler {
     bool _is_first_unread_point_set = false;  //!< Used to set _first_unread_point each time data comes in
     bool _is_eof = false;                     //!< Used to remember whether true value of argument eof was passed
 
+    //! \brief Resize vectors to obtain data
+    //! \details Resize _stream and _is_allocated vectors
+    //! \param data_length the length of data
+    //! \note This function is called when data position exceeds stream size during not exceeding stream limit
+    void resize_vectors(const size_t &data_length);
+
+    //! \brief Handle stream eof
+    //! \details If eof flag is true and current stream is empty, end input of output stream
+    //! \note If there was any ignored byte, stream eof will be never set
+    void handle_stream_eof();
+
+    //! \brief Push data into stream
+    //! \details This function is called when data comes in
+    //! \param data same as the data argument of push_substring
+    //! \param index same as the index argument of push_substring
+    //! \param stream_limit_index the last index of the stream
+    //! \param data_length the length of data
+    void handle_data(const string &data,
+                     const size_t &index,
+                     const size_t &stream_limit_index,
+                     const size_t &data_length);
+
+    //! \brief Consider the data and assemble it
+    //! \details Write any newly contiguous bytes into the _output stream
+    void assemble_data();
+
+    //! \brief Set eof flag to true
+    //! \details This function is called when eof argument is true
+    void set_eof();
+
+    //! \brief Return the size of the stream
+    size_t stream_size() const;
+
+    //! \brief Is the internal state empty (other than the output stream)?
+    //! \returns `true` if no substrings are waiting to be assembled
+    bool empty() const;
+
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
     //! \note This capacity limits both the bytes that have been reassembled,
@@ -54,47 +91,12 @@ class StreamReassembler {
     //! should only be counted once for the purpose of this function.
     size_t unassembled_bytes() const;
 
-    //! \brief Is the internal state empty (other than the output stream)?
-    //! \returns `true` if no substrings are waiting to be assembled
-    bool empty() const;
-
-    //! \brief Return the size of the stream
-    size_t stream_size() const;
-
-    //! \brief Set eof flag to true
-    //! \details This function is called when eof argument is true
-    void set_eof();
-
-    //! \brief Handle stream eof
-    //! \details If eof flag is true and current stream is empty, end input of output stream
-    //! \note If there was any ignored byte, stream eof will be never set
-    void handle_stream_eof();
-
-    //! \brief Resize vectors to obtain data
-    //! \details Resize _stream and _is_allocated vectors
-    //! \param data_length the length of data
-    //! \note This function is called when data position exceeds stream size during not exceeding stream limit
-    void resize_vectors(const size_t &data_length);
-
-    //! \brief Push data into stream
-    //! \details This function is called when data comes in
-    //! \param data same as the data argument of push_substring
-    //! \param index same as the index argument of push_substring
-    //! \param stream_limit_index the last index of the stream
-    //! \param data_length the length of data
-    void handle_data(const string &data,
-                     const size_t &index,
-                     const size_t &stream_limit_index,
-                     const size_t &data_length);
-
-    //! \brief Consider the data and assemble it
-    //! \details Write any newly contiguous bytes into the _output stream
-    void assemble_data();
-    size_t get_next_read_point() const { return _next_read_point; }
     // |-----------------------------|
     // | buffer_size |  window_size  |
     // |         capacity            |
     size_t window_size() const { return _capacity - _output.buffer_size(); }
+
+    size_t get_next_read_point() const { return _next_read_point; }
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH
