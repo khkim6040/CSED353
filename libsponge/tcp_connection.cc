@@ -21,10 +21,6 @@ size_t TCPConnection::unassembled_bytes() const { return _receiver.unassembled_b
 size_t TCPConnection::time_since_last_segment_received() const { return _time_since_last_segment_received; }
 
 void TCPConnection::segment_received(const TCPSegment &seg) {
-    if (!active()) {
-        return;
-    }
-
     // Reset case: RST segment or ack when no SYN has been sent yet
     if (seg.header().rst) {
         handle_RST(false);
@@ -51,7 +47,7 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
 
     // Send empty segment to ack if there is any non-zero length segment to send
     // It will ignore the ackno, whose size is 0
-    if (seg.length_in_sequence_space() != 0 && _sender.segments_out().empty()) {
+    if (seg.length_in_sequence_space() != 0) {
         // Case where receiving SYN before starting to send SYN
         if (seg.header().syn && !_sender.has_sin_sent()) {
             // Send SYN/ACK
@@ -83,9 +79,6 @@ bool TCPConnection::active() const {
 size_t TCPConnection::write(const string &data) {
     if (!data.size())
         return 0;
-    if (!active()) {
-        return 0;
-    }
 
     size_t written = _sender.stream_in().write(data);
     _sender.fill_window();
@@ -95,10 +88,6 @@ size_t TCPConnection::write(const string &data) {
 
 //! \param[in] ms_since_last_tick number of milliseconds since the last call to this method
 void TCPConnection::tick(const size_t ms_since_last_tick) {
-    if (!active()) {
-        return;
-    }
-
     _time_since_last_segment_received += ms_since_last_tick;
     _sender.tick(ms_since_last_tick);
 
@@ -122,10 +111,6 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
 }
 
 void TCPConnection::end_input_stream() {
-    if (!active()) {
-        return;
-    }
-
     _sender.stream_in().end_input();
     _sender.fill_window();
     send_packet();
