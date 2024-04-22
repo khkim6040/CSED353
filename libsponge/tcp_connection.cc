@@ -82,6 +82,8 @@ bool TCPConnection::active() const {
 }
 
 size_t TCPConnection::write(const string &data) {
+    if (!data.size())
+        return 0;
     if (!active()) {
         return 0;
     }
