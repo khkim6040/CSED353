@@ -51,7 +51,7 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
 
     // Send empty segment to ack if there is any non-zero length segment to send
     // It will ignore the ackno, whose size is 0
-    if (seg.length_in_sequence_space() != 0) {
+    if (seg.length_in_sequence_space() != 0 && _sender.segments_out().empty()) {
         // Case where receiving SYN before starting to send SYN
         if (seg.header().syn && !_sender.has_sin_sent()) {
             // Send SYN/ACK
@@ -63,7 +63,7 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     }
 
     // Passive close case: outbound stream has not sent FIN && inbound stream has ended after received segment
-    if (!_sender.has_fin_sent() && _receiver.stream_out().input_ended()) {
+    if (!_sender.stream_in().eof() && _receiver.stream_out().input_ended()) {
         _linger_after_streams_finish = false;
     }
 
@@ -110,14 +110,10 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
 
     // Close connection if all data sent and received
     if (unassembled_bytes() == 0 && _receiver.stream_out().input_ended() && bytes_in_flight() == 0 &&
-        _sender.stream_in().eof() && _sender.next_seqno_absolute() == _sender.stream_in().bytes_written() + 2) {
-        // Active close case: all data has been sent and received
-        if (_linger_after_streams_finish) {
-            if (_time_since_last_segment_received >= 10 * _cfg.rt_timeout) {
-                _is_active = false;
-            }
-        } else {
-            // Passive close case
+        _sender.stream_in().eof() && _sender.next_seqno_absolute() == _sender.stream_in().bytes_written() + 2 &&
+        _sender.has_fin_acked()) {
+        // Passive close case || Active close case
+        if (!_linger_after_streams_finish || time_since_last_segment_received() >= 10 * _cfg.rt_timeout) {
             _is_active = false;
         }
     }

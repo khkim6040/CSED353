@@ -192,6 +192,7 @@ class TCPSender {
 
     bool has_fin_sent() const { return _has_fin_sent; }
     bool has_sin_sent() const { return _has_syn_sent; }
+    bool has_fin_acked() const { return _has_fin_sent && _recent_abs_ackno == _next_seqno; }
     //!@}
 
     //! \name What is the next sequence number? (used for testing)
