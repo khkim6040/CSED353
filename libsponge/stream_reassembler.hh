@@ -22,9 +22,9 @@ class StreamReassembler {
     size_t _next_read_point =
         0;  //!< Indicate next to the already read point, which also stands the first unassembled point in the stream
     size_t _first_unread_point = 0;           //!< Indicate first unread point
-    bool _ignore_flag = false;                //!< Tell whether any unacceptable byte occurred
     bool _is_first_unread_point_set = false;  //!< Used to set _first_unread_point each time data comes in
     bool _is_eof = false;                     //!< Used to remember whether true value of argument eof was passed
+    size_t _eof_index = 0;                    //!< Used to remember the index of eof
 
     //! \brief Resize vectors to obtain data
     //! \details Resize _stream and _is_allocated vectors
@@ -58,10 +58,6 @@ class StreamReassembler {
 
     //! \brief Return the size of the stream
     size_t stream_size() const;
-
-    //! \brief Is the internal state empty (other than the output stream)?
-    //! \returns `true` if no substrings are waiting to be assembled
-    bool empty() const;
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
@@ -97,6 +93,9 @@ class StreamReassembler {
     size_t window_size() const { return _capacity - _output.buffer_size(); }
 
     size_t get_next_read_point() const { return _next_read_point; }
+    //! \brief Is the internal state empty (other than the output stream)?
+    //! \returns `true` if no substrings are waiting to be assembled
+    bool empty() const;
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH

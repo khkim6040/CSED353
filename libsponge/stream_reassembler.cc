@@ -28,8 +28,10 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
     // Assemble data and write it into the output stream
     assemble_data();
     // Handle eof argument
-    if (eof)
+    if (eof) {
         set_eof();
+        _eof_index = index + data_length;
+    }
     handle_stream_eof();
 }
 
@@ -42,7 +44,7 @@ size_t StreamReassembler::stream_size() const { return _stream.size(); }
 void StreamReassembler::set_eof() { _is_eof = true; }
 
 void StreamReassembler::handle_stream_eof() {
-    if (_is_eof && empty() && !_ignore_flag) {
+    if (_is_eof && _output.bytes_written() == _eof_index) {
         _output.end_input();
     }
 }
@@ -58,10 +60,8 @@ void StreamReassembler::handle_data(const string &data,
                                     const size_t &stream_limit_index,
                                     const size_t &data_length) {
     for (size_t i = index; i < index + data_length; i++) {
-        // Out of stream memory case
+        // // Out of stream memory case
         if (i > stream_limit_index) {
-            // Ingore it
-            _ignore_flag = true;
             // Stop considering additional data
             break;
         }
