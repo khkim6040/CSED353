@@ -67,8 +67,67 @@ void NetworkInterface::send_datagram(const InternetDatagram &dgram, const Addres
 
 //! \param[in] frame the incoming Ethernet frame
 optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &frame) {
-    DUMMY_CODE(frame);
-    return {};
+    if (frame.header().dst != _ethernet_address && frame.header().dst != ETHERNET_BROADCAST) {
+        // frame is not for us
+        return nullopt;
+    }
+
+    switch (frame.header().type) {
+        case EthernetHeader::TYPE_IPv4: {
+            // frame contains an IPv4 datagram
+            InternetDatagram dgram;
+            if (dgram.parse(frame.payload()) == ParseResult::NoError) {
+                return dgram;
+            }
+            break;
+        }
+        case EthernetHeader::TYPE_ARP: {
+            // frame contains an ARP message
+            ARPMessage arp_message;
+            if (arp_message.parse(frame.payload()) == ParseResult::NoError) {
+                switch (arp_message.opcode) {
+                    case ARPMessage::OPCODE_REQUEST: {
+                        // ARP request
+                        if (arp_message.target_ip_address == _ip_address.ipv4_numeric()) {
+                            // ARP request is for us
+                            ARPMessage arp_reply;
+                            arp_reply.opcode = ARPMessage::OPCODE_REPLY;
+                            arp_reply.sender_ethernet_address = _ethernet_address;
+                            arp_reply.sender_ip_address = _ip_address.ipv4_numeric();
+                            arp_reply.target_ethernet_address = arp_message.sender_ethernet_address;
+                            arp_reply.target_ip_address = arp_message.sender_ip_address;
+
+                            // create Ethernet frame with ARP reply as payload
+                            EthernetFrame reply_frame;
+                            reply_frame.header().dst = arp_message.sender_ethernet_address;
+                            reply_frame.header().src = _ethernet_address;
+                            reply_frame.header().type = EthernetHeader::TYPE_ARP;
+                            reply_frame.payload().append(arp_reply.serialize());
+
+                            // push frame onto outbound queue
+                            _frames_out.push(reply_frame);
+                        }
+                        break;
+                    }
+                    case ARPMessage::OPCODE_REPLY: {
+                        // ARP reply
+                        _arp_table[arp_message.sender_ip_address] = {arp_message.sender_ethernet_address, 0};
+                        for (auto it = _pending_queue.begin(); it != _pending_queue.end(); ++it) {
+                            if (it->second.ipv4_numeric() == arp_message.sender_ip_address) {
+                                send_datagram(it->first, it->second);
+                                _pending_queue.erase(it);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+    }
+
+    return nullopt;
 }
 
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
