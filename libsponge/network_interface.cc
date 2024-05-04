@@ -14,7 +14,7 @@
 // You will need to add private members to the class declaration in `network_interface.hh`
 
 template <typename... Targs>
-void DUMMY_CODE(Targs &&... /* unused */) {}
+void DUMMY_CODE(Targs &&.../* unused */) {}
 
 using namespace std;
 
@@ -131,4 +131,14 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
 }
 
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
-void NetworkInterface::tick(const size_t ms_since_last_tick) { DUMMY_CODE(ms_since_last_tick); }
+void NetworkInterface::tick(const size_t ms_since_last_tick) {
+    // update ARP table
+    for (auto it = _arp_table.begin(); it != _arp_table.end();) {
+        it->second.second += ms_since_last_tick;
+        if (it->second.second >= ARP_REQUEST_TIMEOUT) {
+            it = _arp_table.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
