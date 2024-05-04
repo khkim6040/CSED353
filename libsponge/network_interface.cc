@@ -34,7 +34,26 @@ void NetworkInterface::send_datagram(const InternetDatagram &dgram, const Addres
     const uint32_t next_hop_ip = next_hop.ipv4_numeric();
 
     // check if we have the Ethernet address of the next hop in our ARP table
-    if (_arp_table.find(next_hop_ip) == _arp_table.end()) {
+    auto iter = _arp_table.find(next_hop_ip);
+    // if it is in pending state(= ETHERNET_BROADCAST), do nothing
+    // handling pending timeout is in tick()
+    if (iter != _arp_table.end() && iter->second.first == ETHERNET_BROADCAST) {
+        return;
+    }
+
+    if (iter != _arp_table.end()) {
+        // if we have the Ethernet address of the next hop
+        // create an Ethernet frame with the IP datagram as payload
+        EthernetFrame frame;
+        frame.header().dst = _arp_table[next_hop_ip].first;
+        frame.header().src = _ethernet_address;
+        frame.header().type = EthernetHeader::TYPE_IPv4;
+        frame.payload().append(dgram.serialize());
+
+        // push frame onto outbound queue
+        _frames_out.push(frame);
+
+    } else {
         // if not, send an ARP request to the next hop
         ARPMessage arp_request;
         arp_request.opcode = ARPMessage::OPCODE_REQUEST;
@@ -49,19 +68,11 @@ void NetworkInterface::send_datagram(const InternetDatagram &dgram, const Addres
         frame.header().type = EthernetHeader::TYPE_ARP;
         frame.payload().append(arp_request.serialize());
 
-        // push frame onto outbound queue
+        // push request frame onto outbound queue
         _frames_out.push(frame);
+        // set arp table with pending state(== ETHERNET_BROADCAST) to estimate pending timeout
+        _arp_table[next_hop_ip] = {ETHERNET_BROADCAST, 0};
         _pending_queue.push_back({dgram, next_hop});
-    } else {
-        // if we have the Ethernet address of the next hop, create an Ethernet frame with the IP datagram as payload
-        EthernetFrame frame;
-        frame.header().dst = _arp_table[next_hop_ip].first;
-        frame.header().src = _ethernet_address;
-        frame.header().type = EthernetHeader::TYPE_IPv4;
-        frame.payload().append(dgram.serialize());
-
-        // push frame onto outbound queue
-        _frames_out.push(frame);
     }
 }
 
@@ -85,6 +96,11 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
             // frame contains an ARP message
             ARPMessage arp_message;
             if (arp_message.parse(frame.payload()) == ParseResult::NoError) {
+                auto iter = _arp_table.find(arp_message.sender_ip_address);
+                if (iter == _arp_table.end() || iter->second.first == ETHERNET_BROADCAST) {
+                    _arp_table[arp_message.sender_ip_address] = {arp_message.sender_ethernet_address, 0};
+                }
+
                 switch (arp_message.opcode) {
                     case ARPMessage::OPCODE_REQUEST: {
                         // ARP request
@@ -111,7 +127,6 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
                     }
                     case ARPMessage::OPCODE_REPLY: {
                         // ARP reply
-                        _arp_table[arp_message.sender_ip_address] = {arp_message.sender_ethernet_address, 0};
                         for (auto it = _pending_queue.begin(); it != _pending_queue.end(); ++it) {
                             if (it->second.ipv4_numeric() == arp_message.sender_ip_address) {
                                 send_datagram(it->first, it->second);
@@ -135,10 +150,19 @@ void NetworkInterface::tick(const size_t ms_since_last_tick) {
     // update ARP table
     for (auto it = _arp_table.begin(); it != _arp_table.end();) {
         it->second.second += ms_since_last_tick;
-        if (it->second.second >= ARP_REQUEST_TIMEOUT) {
-            it = _arp_table.erase(it);
+        // handle two timeout cases
+        if (it->second.first == ETHERNET_BROADCAST) {
+            if (it->second.second >= ARP_REQUEST_TIMEOUT) {
+                it = _arp_table.erase(it);
+            } else {
+                ++it;
+            }
         } else {
-            ++it;
+            if (it->second.second >= ARP_MEMORY_TIMEOUT) {
+                it = _arp_table.erase(it);
+            } else {
+                ++it;
+            }
         }
     }
 }

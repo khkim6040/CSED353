@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <utility>
 
-#define ARP_TIMEOUT 30000
+#define ARP_MEMORY_TIMEOUT 30000
 #define ARP_REQUEST_TIMEOUT 5000
 
 //! \brief A "network interface" that connects IP (the internet layer, or network layer)
