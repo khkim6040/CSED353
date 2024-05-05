@@ -14,7 +14,7 @@
 // You will need to add private members to the class declaration in `network_interface.hh`
 
 template <typename... Targs>
-void DUMMY_CODE(Targs &&... /* unused */) {}
+void DUMMY_CODE(Targs &&.../* unused */) {}
 
 using namespace std;
 
@@ -72,8 +72,8 @@ void NetworkInterface::send_datagram(const InternetDatagram &dgram, const Addres
         _frames_out.push(frame);
         // set arp table with pending state(== ETHERNET_BROADCAST) to estimate pending timeout in tick()
         _arp_table[next_hop_ip] = {ETHERNET_BROADCAST, 0};
-        // push datagram and next hop address to pending queue
-        _pending_queue.push_back({dgram, next_hop});
+        // push datagram and next hop address to pending deque
+        _pending_deque.push_back({dgram, next_hop});
     }
 }
 
@@ -131,12 +131,12 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
                     }
                     case ARPMessage::OPCODE_REPLY: {
                         // ARP reply
-                        for (auto it = _pending_queue.begin(); it != _pending_queue.end(); it++) {
+                        for (auto it = _pending_deque.begin(); it != _pending_deque.end(); it++) {
                             // send datagram if the sender IP address of the ARP reply matches
                             // the target IP address of the pending datagram
                             if (it->second.ipv4_numeric() == arp_message.sender_ip_address) {
                                 send_datagram(it->first, it->second);
-                                _pending_queue.erase(it);
+                                _pending_deque.erase(it);
                                 break;
                             }
                         }

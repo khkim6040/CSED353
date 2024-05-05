@@ -49,7 +49,7 @@ class NetworkInterface {
     std::unordered_map<uint32_t, std::pair<EthernetAddress, uint32_t>> _arp_table{};
 
     // pending queue of IP datagrams awaiting ARP resolution
-    std::deque<std::pair<InternetDatagram, Address>> _pending_queue{};
+    std::deque<std::pair<InternetDatagram, Address>> _pending_deque{};
 
   public:
     //! \brief Construct a network interface with given Ethernet (network-access-layer) and IP (internet-layer) addresses
