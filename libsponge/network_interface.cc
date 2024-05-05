@@ -35,8 +35,8 @@ void NetworkInterface::send_datagram(const InternetDatagram &dgram, const Addres
 
     // check if we have the Ethernet address of the next hop in our ARP table
     auto iter = _arp_table.find(next_hop_ip);
-    // if it is in pending state(= ETHERNET_BROADCAST), do nothing
-    // handling pending timeout is in tick()
+    // if it is in pending state(= assigned MAC address is ETHERNET_BROADCAST), do nothing
+    // in tick(), we will check if the pending timeout is reached
     if (iter != _arp_table.end() && iter->second.first == ETHERNET_BROADCAST) {
         return;
     }
@@ -70,15 +70,16 @@ void NetworkInterface::send_datagram(const InternetDatagram &dgram, const Addres
 
         // push request frame onto outbound queue
         _frames_out.push(frame);
-        // set arp table with pending state(== ETHERNET_BROADCAST) to estimate pending timeout
+        // set arp table with pending state(== ETHERNET_BROADCAST) to estimate pending timeout in tick()
         _arp_table[next_hop_ip] = {ETHERNET_BROADCAST, 0};
+        // push datagram and next hop address to pending queue
         _pending_queue.push_back({dgram, next_hop});
     }
 }
 
 //! \param[in] frame the incoming Ethernet frame
 optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &frame) {
-    if (frame.header().dst != _ethernet_address && frame.header().dst != ETHERNET_BROADCAST) {
+    if (frame.header().dst != ETHERNET_BROADCAST && frame.header().dst != _ethernet_address) {
         // frame is not for us
         return nullopt;
     }
@@ -87,6 +88,7 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
         case EthernetHeader::TYPE_IPv4: {
             // frame contains an IPv4 datagram
             InternetDatagram dgram;
+            // parse as IPv4 datagram and return to caller
             if (dgram.parse(frame.payload()) == ParseResult::NoError) {
                 return dgram;
             }
@@ -95,8 +97,10 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
         case EthernetHeader::TYPE_ARP: {
             // frame contains an ARP message
             ARPMessage arp_message;
+            // parse as ARP message
             if (arp_message.parse(frame.payload()) == ParseResult::NoError) {
                 auto iter = _arp_table.find(arp_message.sender_ip_address);
+                // learn sender information if it is not in arp table or in pending state
                 if (iter == _arp_table.end() || iter->second.first == ETHERNET_BROADCAST) {
                     _arp_table[arp_message.sender_ip_address] = {arp_message.sender_ethernet_address, 0};
                 }
@@ -127,7 +131,9 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
                     }
                     case ARPMessage::OPCODE_REPLY: {
                         // ARP reply
-                        for (auto it = _pending_queue.begin(); it != _pending_queue.end(); ++it) {
+                        for (auto it = _pending_queue.begin(); it != _pending_queue.end(); it++) {
+                            // send datagram if the sender IP address of the ARP reply matches
+                            // the target IP address of the pending datagram
                             if (it->second.ipv4_numeric() == arp_message.sender_ip_address) {
                                 send_datagram(it->first, it->second);
                                 _pending_queue.erase(it);
@@ -152,16 +158,18 @@ void NetworkInterface::tick(const size_t ms_since_last_tick) {
         it->second.second += ms_since_last_tick;
         // handle two timeout cases
         if (it->second.first == ETHERNET_BROADCAST) {
+            // first, pending timeout
             if (it->second.second >= ARP_REQUEST_TIMEOUT) {
                 it = _arp_table.erase(it);
             } else {
-                ++it;
+                it++;
             }
         } else {
+            // second, normal timeout
             if (it->second.second >= ARP_MEMORY_TIMEOUT) {
                 it = _arp_table.erase(it);
             } else {
-                ++it;
+                it++;
             }
         }
     }

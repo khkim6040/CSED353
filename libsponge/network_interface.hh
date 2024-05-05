@@ -48,6 +48,7 @@ class NetworkInterface {
     // ARP table mapping IP addresses to Ethernet addresses and TTLs
     std::unordered_map<uint32_t, std::pair<EthernetAddress, uint32_t>> _arp_table{};
 
+    // pending queue of IP datagrams awaiting ARP resolution
     std::deque<std::pair<InternetDatagram, Address>> _pending_queue{};
 
   public:
