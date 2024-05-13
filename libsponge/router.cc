@@ -35,8 +35,39 @@ void Router::add_route(const uint32_t route_prefix,
 
 //! \param[in] dgram The datagram to be routed
 void Router::route_one_datagram(InternetDatagram &dgram) {
-    DUMMY_CODE(dgram);
     // Your code here.
+    if (dgram.header().ttl <= 1) {
+        return;
+    }
+    dgram.header().ttl -= 1;
+
+    IPv4Header &header = dgram.header();
+    uint32_t dst_ip = header.dst;
+
+    uint8_t longest_prefix_length = 0;
+    tuple<uint32_t, uint8_t, optional<Address>, size_t> longest_prefix;
+    for (auto it : _routing_table) {
+        uint32_t route_prefix = get<0>(it);
+        uint8_t prefix_length = get<1>(it);
+
+        uint32_t mask = 0xffffffff - ((1 << (32 - prefix_length)) - 1);
+        if ((dst_ip & mask) == route_prefix && prefix_length > longest_prefix_length) {
+            longest_prefix_length = prefix_length;
+            longest_prefix = it;
+        }
+    }
+
+    if (longest_prefix_length == 0) {
+        return;
+    }
+
+    optional<Address> next_hop = get<2>(longest_prefix);
+    size_t interface_num = get<3>(longest_prefix);
+    if (next_hop.has_value()) {
+        interface(interface_num).send_datagram(dgram, next_hop.value());
+    } else {
+        interface(interface_num).send_datagram(dgram, Address::from_ipv4_numeric(dst_ip));
+    }
 }
 
 void Router::route() {
