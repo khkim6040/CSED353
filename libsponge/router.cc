@@ -41,23 +41,28 @@ void Router::route_one_datagram(InternetDatagram &dgram) {
     }
     dgram.header().ttl -= 1;
 
-    IPv4Header &header = dgram.header();
-    uint32_t dst_ip = header.dst;
+    uint32_t dst_ip = dgram.header().dst;
 
-    uint8_t longest_prefix_length = 0;
+    int16_t longest_prefix_length = -1;
     tuple<uint32_t, uint8_t, optional<Address>, size_t> longest_prefix;
     for (auto it : _routing_table) {
         uint32_t route_prefix = get<0>(it);
         uint8_t prefix_length = get<1>(it);
 
-        uint32_t mask = 0xffffffff - ((1 << (32 - prefix_length)) - 1);
-        if ((dst_ip & mask) == route_prefix && prefix_length > longest_prefix_length) {
+        uint32_t mask;
+        if (prefix_length == 0) {
+            mask = 0;
+        } else {
+            mask = ~((1 << (32 - prefix_length)) - 1);
+        }
+
+        if ((dst_ip & mask) == route_prefix && (prefix_length > longest_prefix_length)) {
             longest_prefix_length = prefix_length;
             longest_prefix = it;
         }
     }
 
-    if (longest_prefix_length == 0) {
+    if (longest_prefix_length == -1) {
         return;
     }
 
