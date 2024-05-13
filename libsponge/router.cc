@@ -16,7 +16,7 @@ using namespace std;
 // You will need to add private members to the class declaration in `router.hh`
 
 template <typename... Targs>
-void DUMMY_CODE(Targs &&.../* unused */) {}
+void DUMMY_CODE(Targs &&... /* unused */) {}
 
 //! \param[in] route_prefix The "up-to-32-bit" IPv4 address prefix to match the datagram's destination address against
 //! \param[in] prefix_length For this route to be applicable, how many high-order (most-significant) bits of the route_prefix will need to match the corresponding bits of the datagram's destination address?
@@ -36,6 +36,7 @@ void Router::add_route(const uint32_t route_prefix,
 //! \param[in] dgram The datagram to be routed
 void Router::route_one_datagram(InternetDatagram &dgram) {
     // Your code here.
+    // Check TTL expiration
     if (dgram.header().ttl <= 1) {
         return;
     }
@@ -43,6 +44,8 @@ void Router::route_one_datagram(InternetDatagram &dgram) {
 
     uint32_t dst_ip = dgram.header().dst;
 
+    // Find the longest prefix match
+    // It is initailized to -1 because we should consider zero-length prefix
     int16_t longest_prefix_length = -1;
     tuple<uint32_t, uint8_t, optional<Address>, size_t> longest_prefix;
     for (auto it : _routing_table) {
@@ -56,16 +59,19 @@ void Router::route_one_datagram(InternetDatagram &dgram) {
             mask = ~((1 << (32 - prefix_length)) - 1);
         }
 
+        // Update the longest prefix match
         if ((dst_ip & mask) == route_prefix && (prefix_length > longest_prefix_length)) {
             longest_prefix_length = prefix_length;
             longest_prefix = it;
         }
     }
 
+    // If no match is found, drop the datagram
     if (longest_prefix_length == -1) {
         return;
     }
 
+    // Send the datagram to the next hop
     optional<Address> next_hop = get<2>(longest_prefix);
     size_t interface_num = get<3>(longest_prefix);
     if (next_hop.has_value()) {

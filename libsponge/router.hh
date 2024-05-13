@@ -50,7 +50,7 @@ class Router {
     //! datagram's destination address.
     void route_one_datagram(InternetDatagram &dgram);
 
-    //! A routing table that maps destination addresses to the next hop and outbound interface
+    // A routing table is a collection of routing information that is earned by the add_route method
     std::vector<std::tuple<uint32_t, uint8_t, std::optional<Address>, size_t>> _routing_table{};
 
   public:
