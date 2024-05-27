@@ -14,7 +14,7 @@ void get_URL(const string &host, const string &path) {
     // Host: tomahawk.postech.ac.kr
     // Connection: close
 
-    CS144TCPSocket sock;
+    FullStackSocket sock;
     // connect to host
     sock.connect(Address(host, "http"));
     // request in path
