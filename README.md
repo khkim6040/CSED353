@@ -1,3 +1,49 @@
+# CSED353(Computer Network)
+
+## Objective
+Today, Internet access is considered a basic human right.\
+Nearly every computer, mobile device, and even wearable that we interact with on a daily basis are connected over the network. We cannot imagine a computer without a network; we cannot imagine our life without a networked computer.
+
+In this light, this course is designed to help the students learn from mainly three dimensions as follows:
+1. Lectures. 
+- We will discuss basic principles and topics of fundamental concepts concerning the technology and architecture of the Internet. Topics to be covered mainly in this course will include IP, TCP/UDP, and Internet applications. 
+- The lectures will also feature advanced topics, namely "network beyond connectivity", where we will taste modern case studies that utilize the network as a physical sensor, a privacy defender, a social facilitator, and so on.
+
+2. Brand-new Assignments. 
+- As of 2022, this course will feature whole re-designed assignments. These assignments will guide the students to develop hands-on technical experiences by building the key mechanisms of the protocols making modern computers talk to each other.
+
+3. Global Industry. 
+- A specially invited POSTECH graduate (now working for a tech giant in Silicon Valley) will offer a guest lecture on the cutting-edge global networking industry.
+- This guest lecture is to broaden the eyes of our fellow POSTECH juniors, to depict a career path that may be yours one day, and to give a crisp purpose for learning networks.
+
+## Professor
+Name: Inseok Hwang\
+Homepage: HTTPS://WWW.HIS-LAB.ORG
+
+## Grading Policy
+Mid-term 20%\
+Final 25%\
+Programming assignments 35%\
+Written assignments & quizzes 10%\
+Interactivity and participation 10%
+
+## References
+- Computer Networking – A Top-Down Approach by J. F. Kurose and K. W. Ross, 8th edition. (Global edition) Pearson.
+- Additional materials will be provided if necessary
+
+## Lecture Schedule
+- Overview of computer network 
+- Understanding of layers
+ - Application layer
+ - Transport layer 
+ - Network layer
+ - Data link layer
+- Special guest lecture on networking: to be offered by a POSTECH graduate now working for a major tech giant in Silicon Valley
+- Advanced topics on networking: computer networking as a physical sensor, a privacy defender, and a social facilitator
+
+---
+## CSED353 Lab Assignments
+
 For build prereqs, see [the VM setup instructions](http://tomahawk.postech.ac.kr/csed353/assignments/vm/virtualbox).
 
 ## Sponge quickstart
