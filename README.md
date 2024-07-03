@@ -34,10 +34,10 @@ Interactivity and participation 10%
 ## Lecture Schedule
 - Overview of computer network 
 - Understanding of layers
- - Application layer
- - Transport layer 
- - Network layer
- - Data link layer
+	- Application layer
+ 	- Transport layer 
+ 	- Network layer
+ 	- Data link layer
 - Special guest lecture on networking: to be offered by a POSTECH graduate now working for a major tech giant in Silicon Valley
 - Advanced topics on networking: computer networking as a physical sensor, a privacy defender, and a social facilitator
 
